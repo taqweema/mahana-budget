@@ -107,6 +107,17 @@ const BudgetApp = () => {
     type: 'expense', amount: '', category: '', description: ''
   });
 
+  const [budgetLimits, setBudgetLimits] = useState(() => {
+    const savedLimits = loadFromStorage(STORAGE_KEYS.SETTINGS);
+    return savedLimits || {
+      'Housing': 45000, 'Food': 25000, 'Transportation': 15000, 
+      'Entertainment & Leisure': 8000, 'Personal Care': 5000, 
+      'Health & Insurance': 12000, 'Technology & Gadgets': 6000
+    };
+  });
+
+  const [showSettings, setShowSettings] = useState(false);
+  
   const categories = {
     expense: ['Housing', 'Transportation', 'Food', 'Health & Insurance', 'Personal Care', 'Entertainment & Leisure', 'Technology & Gadgets'],
     income: ['Salary', 'Bonus/Commission', 'Freelance/Side Income', 'Investments/Dividends', 'Other Income']
