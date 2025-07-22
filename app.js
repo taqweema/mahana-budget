@@ -48,6 +48,42 @@ const X = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 
   React.createElement('path', { d: 'M18 6L6 18M6 6l12 12' })
 );
 
+// localStorage Helper Functions
+const STORAGE_KEYS = {
+  TRANSACTIONS: 'mahana_budget_transactions',
+  SETTINGS: 'mahana_budget_settings'
+};
+
+const saveToStorage = (key, data) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error('Failed to save to localStorage:', error);
+    return false;
+  }
+};
+
+const loadFromStorage = (key, defaultValue = null) => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.error('Failed to load from localStorage:', error);
+    return defaultValue;
+  }
+};
+
+const clearStorage = (key) => {
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    console.error('Failed to clear localStorage:', error);
+    return false;
+  }
+};
+
 const BudgetApp = () => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -55,13 +91,17 @@ const BudgetApp = () => {
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   
-  const [transactions, setTransactions] = useState([
+  const [transactions, setTransactions] = useState(() => {
+  // Load from localStorage or use default data
+  const savedTransactions = loadFromStorage(STORAGE_KEYS.TRANSACTIONS);
+  return savedTransactions || [
     { id: 1, type: 'expense', amount: 4500, category: 'Food', description: 'Weekly grocery shopping', date: '2025-07-20' },
     { id: 2, type: 'income', amount: 85000, category: 'Salary', description: 'Monthly salary', date: '2025-07-15' },
     { id: 3, type: 'expense', amount: 45000, category: 'Housing', description: 'Monthly rent payment', date: '2025-07-01' },
     { id: 4, type: 'expense', amount: 1200, category: 'Entertainment & Leisure', description: 'Netflix and Spotify', date: '2025-07-18' },
     { id: 5, type: 'expense', amount: 2500, category: 'Transportation', description: 'Fuel for car', date: '2025-07-19' }
-  ]);
+  ];
+});
 
   const [newTransaction, setNewTransaction] = useState({
     type: 'expense', amount: '', category: '', description: ''
@@ -112,18 +152,20 @@ const BudgetApp = () => {
   };
 
   const addTransaction = () => {
-    if (newTransaction.amount && newTransaction.description) {
-      const transaction = {
-        id: Date.now(),
-        ...newTransaction,
-        amount: parseFloat(newTransaction.amount),
-        date: new Date().toISOString().split('T')[0]
-      };
-      setTransactions([transaction, ...transactions]);
-      setNewTransaction({ type: 'expense', amount: '', category: '', description: '' });
-      setShowAddModal(false);
-    }
-  };
+  if (newTransaction.amount && newTransaction.description) {
+    const transaction = {
+      id: Date.now(),
+      ...newTransaction,
+      amount: parseFloat(newTransaction.amount),
+      date: new Date().toISOString().split('T')[0]
+    };
+    const updatedTransactions = [transaction, ...transactions];
+    setTransactions(updatedTransactions);
+    saveToStorage(STORAGE_KEYS.TRANSACTIONS, updatedTransactions);
+    setNewTransaction({ type: 'expense', amount: '', category: '', description: '' });
+    setShowAddModal(false);
+  }
+};
 
   const calculateTotals = () => {
     const currentMonth = new Date().getMonth();
