@@ -48,6 +48,11 @@ const X = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 
   React.createElement('path', { d: 'M18 6L6 18M6 6l12 12' })
 );
 
+const Settings = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
+  React.createElement('circle', { cx: 12, cy: 12, r: 3 }),
+  React.createElement('path', { d: 'M12 1v6m0 10v6m11-7h-6m-10 0H1m15.5-3.5L19 10l-1.5-1.5M5 14l-1.5 1.5L2 14l1.5-1.5L5 14z' })
+);
+
 // localStorage Helper Functions
 const STORAGE_KEYS = {
   TRANSACTIONS: 'mahana_budget_transactions',
