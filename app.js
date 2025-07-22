@@ -112,6 +112,13 @@ const BudgetApp = () => {
     income: ['Salary', 'Bonus/Commission', 'Freelance/Side Income', 'Investments/Dividends', 'Other Income']
   };
 
+    // Auto-save transactions whenever they change
+  useEffect(() => {
+    if (transactions.length > 0) {
+      saveToStorage(STORAGE_KEYS.TRANSACTIONS, transactions);
+    }
+  }, [transactions]);
+
   // PWA Installation Logic
   useEffect(() => {
     const checkInstalled = () => {
