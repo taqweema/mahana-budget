@@ -118,11 +118,11 @@ const BudgetApp = () => {
 
   const [showSettings, setShowSettings] = useState(false);
   
-  const categories = {
-    expense: ['Housing', 'Transportation', 'Food', 'Health & Insurance', 'Personal Care', 'Entertainment & Leisure', 'Technology & Gadgets'],
+const categories = {
+    expense: Object.keys(budgetLimits).concat(['Gifts & Donations', 'Miscellaneous']),
     income: ['Salary', 'Bonus/Commission', 'Freelance/Side Income', 'Investments/Dividends', 'Other Income']
   };
-
+  
     // Auto-save transactions whenever they change
   useEffect(() => {
     if (transactions.length > 0) {
