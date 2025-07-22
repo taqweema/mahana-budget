@@ -688,6 +688,25 @@ const categories = {
           React.createElement(Target),
           React.createElement('span', { style: { fontSize: '12px', fontWeight: '500', marginTop: '4px' } }, 'Goals')
         )
+
+        ,
+        React.createElement('button', {
+          onClick: () => setCurrentView('settings'),
+          style: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            border: 'none',
+            backgroundColor: currentView === 'settings' ? '#E9F4FF' : 'transparent',
+            color: currentView === 'settings' ? '#4C51C6' : '#6B7280',
+            cursor: 'pointer'
+          }
+        },
+          React.createElement(Settings),
+          React.createElement('span', { style: { fontSize: '12px', fontWeight: '500', marginTop: '4px' } }, 'Settings')
+        )
       )
     )
   );
