@@ -105,7 +105,15 @@ const BudgetApp = () => {
       'Health & Insurance': 12000, 'Technology & Gadgets': 6000
     };
   });
-
+  
+const [budgetCycle, setBudgetCycle] = useState(() => {
+    const savedCycle = loadFromStorage('mahana_budget_cycle');
+    return savedCycle || {
+      startDate: 1, // 1st of month by default
+      resetDay: 1
+    };
+  });
+  
   const [newTransaction, setNewTransaction] = useState({
     type: 'expense', amount: '', category: '', description: ''
   });
