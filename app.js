@@ -79,16 +79,6 @@ const loadFromStorage = (key, defaultValue = null) => {
   }
 };
 
-const clearStorage = (key) => {
-  try {
-    localStorage.removeItem(key);
-    return true;
-  } catch (error) {
-    console.error('Failed to clear localStorage:', error);
-    return false;
-  }
-};
-
 const BudgetApp = () => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -97,22 +87,17 @@ const BudgetApp = () => {
   const [isInstalled, setIsInstalled] = useState(false);
   
   const [transactions, setTransactions] = useState(() => {
-  // Load from localStorage or use default data
-  const savedTransactions = loadFromStorage(STORAGE_KEYS.TRANSACTIONS);
-  return savedTransactions || [
-    { id: 1, type: 'expense', amount: 4500, category: 'Food', description: 'Weekly grocery shopping', date: '2025-07-20' },
-    { id: 2, type: 'income', amount: 85000, category: 'Salary', description: 'Monthly salary', date: '2025-07-15' },
-    { id: 3, type: 'expense', amount: 45000, category: 'Housing', description: 'Monthly rent payment', date: '2025-07-01' },
-    { id: 4, type: 'expense', amount: 1200, category: 'Entertainment & Leisure', description: 'Netflix and Spotify', date: '2025-07-18' },
-    { id: 5, type: 'expense', amount: 2500, category: 'Transportation', description: 'Fuel for car', date: '2025-07-19' }
-  ];
-});
-
-  const [newTransaction, setNewTransaction] = useState({
-    type: 'expense', amount: '', category: '', description: ''
+    const savedTransactions = loadFromStorage(STORAGE_KEYS.TRANSACTIONS);
+    return savedTransactions || [
+      { id: 1, type: 'expense', amount: 4500, category: 'Food', description: 'Weekly grocery shopping', date: '2025-07-20' },
+      { id: 2, type: 'income', amount: 85000, category: 'Salary', description: 'Monthly salary', date: '2025-07-15' },
+      { id: 3, type: 'expense', amount: 45000, category: 'Housing', description: 'Monthly rent payment', date: '2025-07-01' },
+      { id: 4, type: 'expense', amount: 1200, category: 'Entertainment & Leisure', description: 'Netflix and Spotify', date: '2025-07-18' },
+      { id: 5, type: 'expense', amount: 2500, category: 'Transportation', description: 'Fuel for car', date: '2025-07-19' }
+    ];
   });
 
-  const [budgetLimits, setBudgetLimits] = useState(() => {
+  const [budgetLimits] = useState(() => {
     const savedLimits = loadFromStorage(STORAGE_KEYS.SETTINGS);
     return savedLimits || {
       'Housing': 45000, 'Food': 25000, 'Transportation': 15000, 
@@ -121,14 +106,16 @@ const BudgetApp = () => {
     };
   });
 
-  const [showSettings, setShowSettings] = useState(false);
-  
-const categories = {
+  const [newTransaction, setNewTransaction] = useState({
+    type: 'expense', amount: '', category: '', description: ''
+  });
+
+  const categories = {
     expense: Object.keys(budgetLimits).concat(['Gifts & Donations', 'Miscellaneous']),
     income: ['Salary', 'Bonus/Commission', 'Freelance/Side Income', 'Investments/Dividends', 'Other Income']
   };
-  
-    // Auto-save transactions whenever they change
+
+  // Auto-save transactions
   useEffect(() => {
     if (transactions.length > 0) {
       saveToStorage(STORAGE_KEYS.TRANSACTIONS, transactions);
@@ -175,20 +162,20 @@ const categories = {
   };
 
   const addTransaction = () => {
-  if (newTransaction.amount && newTransaction.description) {
-    const transaction = {
-      id: Date.now(),
-      ...newTransaction,
-      amount: parseFloat(newTransaction.amount),
-      date: new Date().toISOString().split('T')[0]
-    };
-    const updatedTransactions = [transaction, ...transactions];
-    setTransactions(updatedTransactions);
-    saveToStorage(STORAGE_KEYS.TRANSACTIONS, updatedTransactions);
-    setNewTransaction({ type: 'expense', amount: '', category: '', description: '' });
-    setShowAddModal(false);
-  }
-};
+    if (newTransaction.amount && newTransaction.description) {
+      const transaction = {
+        id: Date.now(),
+        ...newTransaction,
+        amount: parseFloat(newTransaction.amount),
+        date: new Date().toISOString().split('T')[0]
+      };
+      const updatedTransactions = [transaction, ...transactions];
+      setTransactions(updatedTransactions);
+      saveToStorage(STORAGE_KEYS.TRANSACTIONS, updatedTransactions);
+      setNewTransaction({ type: 'expense', amount: '', category: '', description: '' });
+      setShowAddModal(false);
+    }
+  };
 
   const calculateTotals = () => {
     const currentMonth = new Date().getMonth();
@@ -206,6 +193,217 @@ const categories = {
   };
 
   const { totalIncome, totalExpenses, balance } = calculateTotals();
+
+  // Render content based on current view
+  const renderContent = () => {
+    if (currentView === 'settings') {
+      return React.createElement('div', { style: { padding: '16px' } },
+        React.createElement('h2', { style: { fontSize: '24px', fontWeight: 'bold', color: '#3C3F58', marginBottom: '20px' } }, 'Budget Settings'),
+        React.createElement('p', { style: { color: '#6B7280', marginBottom: '20px' } }, 'Configure your budget limits and categories'),
+        React.createElement('div', { style: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' } },
+          React.createElement('p', { style: { color: '#3C3F58', fontSize: '16px' } }, 'Settings screen coming soon!')
+        )
+      );
+    }
+
+    if (currentView === 'dashboard') {
+      return React.createElement('div', null,
+        // Stats Cards
+        React.createElement('div', { 
+          style: { 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
+            gap: '8px', 
+            padding: '16px' 
+          } 
+        },
+          React.createElement('div', {
+            style: {
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '12px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '1px solid #A6FFC8'
+            }
+          },
+            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' } },
+              React.createElement(TrendingUp),
+              React.createElement('span', { style: { fontSize: '12px', color: '#A6FFC8', fontWeight: '500' } }, 'Income')
+            ),
+            React.createElement('p', { style: { fontSize: '18px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, `₨${(totalIncome/1000).toFixed(0)}k`)
+          ),
+          React.createElement('div', {
+            style: {
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '12px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '1px solid #FD830D'
+            }
+          },
+            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' } },
+              React.createElement(TrendingDown),
+              React.createElement('span', { style: { fontSize: '12px', color: '#FD830D', fontWeight: '500' } }, 'Expenses')
+            ),
+            React.createElement('p', { style: { fontSize: '18px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, `₨${(totalExpenses/1000).toFixed(0)}k`)
+          ),
+          React.createElement('div', {
+            style: {
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '12px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: `1px solid ${balance >= 0 ? '#4C51C6' : '#FD830D'}`
+            }
+          },
+            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' } },
+              React.createElement(Wallet),
+              React.createElement('span', { style: { fontSize: '12px', color: balance >= 0 ? '#4C51C6' : '#FD830D', fontWeight: '500' } }, 'Balance')
+            ),
+            React.createElement('p', { style: { fontSize: '18px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, `₨${(Math.abs(balance)/1000).toFixed(0)}k`)
+          )
+        ),
+
+        // Quick Add Section
+        React.createElement('div', { style: { padding: '0 16px' } },
+          React.createElement('div', {
+            style: {
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '16px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              marginBottom: '16px'
+            }
+          },
+            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' } },
+              React.createElement('h3', { style: { fontWeight: '600', color: '#3C3F58', margin: 0 } }, 'Quick Add'),
+              React.createElement('button', {
+                onClick: () => setShowAddModal(true),
+                style: {
+                  backgroundColor: '#4C51C6',
+                  color: 'white',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }
+              }, React.createElement(PlusCircle))
+            ),
+            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' } },
+              React.createElement('button', {
+                onClick: () => { setNewTransaction({...newTransaction, type: 'expense'}); setShowAddModal(true); },
+                style: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '12px',
+                  backgroundColor: '#FDF2F8',
+                  borderRadius: '8px',
+                  border: '1px solid #FD830D',
+                  cursor: 'pointer'
+                }
+              },
+                React.createElement(TrendingDown),
+                React.createElement('span', { style: { fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginLeft: '8px' } }, 'Expense')
+              ),
+              React.createElement('button', {
+                onClick: () => { setNewTransaction({...newTransaction, type: 'income'}); setShowAddModal(true); },
+                style: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '12px',
+                  backgroundColor: '#F0FDF4',
+                  borderRadius: '8px',
+                  border: '1px solid #A6FFC8',
+                  cursor: 'pointer'
+                }
+              },
+                React.createElement(TrendingUp),
+                React.createElement('span', { style: { fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginLeft: '8px' } }, 'Income')
+              )
+            )
+          )
+        ),
+
+        // Recent Transactions
+        React.createElement('div', { style: { padding: '0 16px' } },
+          React.createElement('div', {
+            style: {
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }
+          },
+            React.createElement('div', { 
+              style: { 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                padding: '16px', 
+                borderBottom: '1px solid #f3f4f6' 
+              } 
+            },
+              React.createElement('h3', { style: { fontWeight: '600', color: '#3C3F58', margin: 0 } }, 'Recent'),
+              React.createElement('button', {
+                onClick: () => setCurrentView('transactions'),
+                style: {
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#4C51C6',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer'
+                }
+              }, 'View All')
+            ),
+            ...transactions.slice(0, 5).map(transaction => 
+              React.createElement('div', { 
+                key: transaction.id,
+                style: { 
+                  padding: '16px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  borderBottom: '1px solid #f9fafb'
+                } 
+              },
+                React.createElement('div', { style: { display: 'flex', alignItems: 'center' } },
+                  React.createElement('div', {
+                    style: {
+                      padding: '8px',
+                      borderRadius: '8px',
+                      backgroundColor: transaction.type === 'income' ? '#F0FDF4' : '#FDF2F8',
+                      marginRight: '12px'
+                    }
+                  }, transaction.type === 'income' ? React.createElement(TrendingUp) : React.createElement(TrendingDown)),
+                  React.createElement('div', {},
+                    React.createElement('p', { style: { fontWeight: '500', color: '#3C3F58', fontSize: '14px', margin: 0 } }, transaction.description),
+                    React.createElement('p', { style: { fontSize: '12px', color: '#6b7280', margin: 0 } }, transaction.category)
+                  )
+                ),
+                React.createElement('div', { style: { textAlign: 'right' } },
+                  React.createElement('p', { 
+                    style: { 
+                      fontWeight: '600', 
+                      fontSize: '14px', 
+                      color: transaction.type === 'income' ? '#A6FFC8' : '#FD830D',
+                      margin: 0
+                    } 
+                  }, `${transaction.type === 'income' ? '+' : '-'}₨${(transaction.amount/1000).toFixed(1)}k`),
+                  React.createElement('p', { style: { fontSize: '12px', color: '#6b7280', margin: 0 } }, new Date(transaction.date).toLocaleDateString())
+                )
+              )
+            )
+          )
+        )
+      );
+    }
+
+    // Default for other views
+    return React.createElement('div', { style: { padding: '20px', textAlign: 'center' } },
+      React.createElement('h2', { style: { color: '#3C3F58' } }, currentView.charAt(0).toUpperCase() + currentView.slice(1)),
+      React.createElement('p', { style: { color: '#6B7280' } }, 'This section is coming soon!')
+    );
+  };
 
   return React.createElement('div', { style: { minHeight: '100vh', backgroundColor: '#E9F4FF' } },
     // Header
@@ -263,213 +461,11 @@ const categories = {
       )
     ),
 
-    // Main Content Area
-      React.createElement('main', { style: { paddingBottom: '80px' } },
-      // Show Settings Screen
-      currentView === 'settings' ? React.createElement('div', { style: { padding: '16px' } },
-        React.createElement('h2', { style: { fontSize: '24px', fontWeight: 'bold', color: '#3C3F58', marginBottom: '20px' } }, 'Budget Settings'),
-        React.createElement('p', { style: { color: '#6B7280', marginBottom: '20px' } }, 'Configure your budget limits and categories'),
-        React.createElement('div', { style: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' } },
-          React.createElement('p', { style: { color: '#3C3F58', fontSize: '16px' } }, 'Settings screen coming soon!')
-        )
-      ) :
-      // Show Dashboard (existing content)
-      currentView === 'dashboard' ? React.createElement('div', null,
-        // Stats Cards
-
-    // Stats Cards
-      React.createElement('div', { 
-        style: { 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(3, 1fr)', 
-          gap: '8px', 
-          padding: '16px' 
-        } 
-      },
-        React.createElement('div', {
-          style: {
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '12px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            border: '1px solid #A6FFC8'
-          }
-        },
-          React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' } },
-            React.createElement(TrendingUp),
-            React.createElement('span', { style: { fontSize: '12px', color: '#A6FFC8', fontWeight: '500' } }, 'Income')
-          ),
-          React.createElement('p', { style: { fontSize: '18px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, `₨${(totalIncome/1000).toFixed(0)}k`)
-        ),
-        React.createElement('div', {
-          style: {
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '12px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            border: '1px solid #FD830D'
-          }
-        },
-          React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' } },
-            React.createElement(TrendingDown),
-            React.createElement('span', { style: { fontSize: '12px', color: '#FD830D', fontWeight: '500' } }, 'Expenses')
-          ),
-          React.createElement('p', { style: { fontSize: '18px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, `₨${(totalExpenses/1000).toFixed(0)}k`)
-        ),
-        React.createElement('div', {
-          style: {
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '12px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            border: `1px solid ${balance >= 0 ? '#4C51C6' : '#FD830D'}`
-          }
-        },
-          React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' } },
-            React.createElement(Wallet),
-            React.createElement('span', { style: { fontSize: '12px', color: balance >= 0 ? '#4C51C6' : '#FD830D', fontWeight: '500' } }, 'Balance')
-          ),
-          React.createElement('p', { style: { fontSize: '18px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, `₨${(Math.abs(balance)/1000).toFixed(0)}k`)
-        )
-      ),
-
-      // Quick Add Section
-      React.createElement('div', { style: { padding: '0 16px' } },
-        React.createElement('div', {
-          style: {
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '16px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            marginBottom: '16px'
-          }
-        },
-          React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' } },
-            React.createElement('h3', { style: { fontWeight: '600', color: '#3C3F58', margin: 0 } }, 'Quick Add'),
-            React.createElement('button', {
-              onClick: () => setShowAddModal(true),
-              style: {
-                backgroundColor: '#4C51C6',
-                color: 'white',
-                padding: '8px',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer'
-              }
-            }, React.createElement(PlusCircle))
-          ),
-          React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' } },
-            React.createElement('button', {
-              onClick: () => { setNewTransaction({...newTransaction, type: 'expense'}); setShowAddModal(true); },
-              style: {
-                display: 'flex',
-                alignItems: 'center',
-                padding: '12px',
-                backgroundColor: '#FDF2F8',
-                borderRadius: '8px',
-                border: '1px solid #FD830D',
-                cursor: 'pointer'
-              }
-            },
-              React.createElement(TrendingDown),
-              React.createElement('span', { style: { fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginLeft: '8px' } }, 'Expense')
-            ),
-            React.createElement('button', {
-              onClick: () => { setNewTransaction({...newTransaction, type: 'income'}); setShowAddModal(true); },
-              style: {
-                display: 'flex',
-                alignItems: 'center',
-                padding: '12px',
-                backgroundColor: '#F0FDF4',
-                borderRadius: '8px',
-                border: '1px solid #A6FFC8',
-                cursor: 'pointer'
-              }
-            },
-              React.createElement(TrendingUp),
-              React.createElement('span', { style: { fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginLeft: '8px' } }, 'Income')
-            )
-          )
-        )
-      ),
-
-      // Recent Transactions
-      React.createElement('div', { style: { padding: '0 16px' } },
-        React.createElement('div', {
-          style: {
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-          }
-        },
-          React.createElement('div', { 
-            style: { 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              padding: '16px', 
-              borderBottom: '1px solid #f3f4f6' 
-            } 
-          },
-            React.createElement('h3', { style: { fontWeight: '600', color: '#3C3F58', margin: 0 } }, 'Recent'),
-            React.createElement('button', {
-              onClick: () => setCurrentView('transactions'),
-              style: {
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#4C51C6',
-                border: 'none',
-                background: 'none',
-                cursor: 'pointer'
-              }
-            }, 'View All')
-          ),
-          ...transactions.slice(0, 5).map(transaction => 
-            React.createElement('div', { 
-              key: transaction.id,
-              style: { 
-                padding: '16px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                borderBottom: '1px solid #f9fafb'
-              } 
-            },
-              React.createElement('div', { style: { display: 'flex', alignItems: 'center' } },
-                React.createElement('div', {
-                  style: {
-                    padding: '8px',
-                    borderRadius: '8px',
-                    backgroundColor: transaction.type === 'income' ? '#F0FDF4' : '#FDF2F8',
-                    marginRight: '12px'
-                  }
-                }, transaction.type === 'income' ? React.createElement(TrendingUp) : React.createElement(TrendingDown)),
-                React.createElement('div', {},
-                  React.createElement('p', { style: { fontWeight: '500', color: '#3C3F58', fontSize: '14px', margin: 0 } }, transaction.description),
-                  React.createElement('p', { style: { fontSize: '12px', color: '#6b7280', margin: 0 } }, transaction.category)
-                )
-              ),
-              React.createElement('div', { style: { textAlign: 'right' } },
-                React.createElement('p', { 
-                  style: { 
-                    fontWeight: '600', 
-                    fontSize: '14px', 
-                    color: transaction.type === 'income' ? '#A6FFC8' : '#FD830D',
-                    margin: 0
-                  } 
-                }, `${transaction.type === 'income' ? '+' : '-'}₨${(transaction.amount/1000).toFixed(1)}k`),
-                React.createElement('p', { style: { fontSize: '12px', color: '#6b7280', margin: 0 } }, new Date(transaction.date).toLocaleDateString())
-              )
-            )
-          )
-        )
-      )
+    // Main Content
+    React.createElement('main', { style: { paddingBottom: '80px' } },
+      renderContent()
     ),
-      ) : React.createElement('div', { style: { padding: '20px', textAlign: 'center' } },
-        React.createElement('h2', { style: { color: '#3C3F58' } }, currentView.charAt(0).toUpperCase() + currentView.slice(1)),
-        React.createElement('p', { style: { color: '#6B7280' } }, 'This section is coming soon!')
-      )
-                          
+
     // Add Transaction Modal
     showAddModal && React.createElement('div', {
       style: {
@@ -599,7 +595,7 @@ const categories = {
                 borderRadius: '8px',
                 fontSize: '16px',
                 outline: 'none'
-              }
+}
             })
           ),
 
@@ -703,9 +699,7 @@ const categories = {
         },
           React.createElement(Target),
           React.createElement('span', { style: { fontSize: '12px', fontWeight: '500', marginTop: '4px' } }, 'Goals')
-        )
-
-        ,
+        ),
         React.createElement('button', {
           onClick: () => setCurrentView('settings'),
           style: {
