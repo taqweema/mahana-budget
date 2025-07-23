@@ -219,16 +219,61 @@ const calculateTotals = () => {
 
   // Render content based on current view
   const renderContent = () => {
-    if (currentView === 'settings') {
+if (currentView === 'settings') {
       return React.createElement('div', { style: { padding: '16px' } },
         React.createElement('h2', { style: { fontSize: '24px', fontWeight: 'bold', color: '#3C3F58', marginBottom: '20px' } }, 'Budget Settings'),
-        React.createElement('p', { style: { color: '#6B7280', marginBottom: '20px' } }, 'Configure your budget limits and categories'),
+        
+        // Budget Cycle Settings
+        React.createElement('div', { style: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' } },
+          React.createElement('h3', { style: { fontSize: '18px', fontWeight: '600', color: '#3C3F58', marginBottom: '12px' } }, 'Budget Cycle'),
+          React.createElement('p', { style: { color: '#6B7280', marginBottom: '16px', fontSize: '14px' } }, 'Set when your budget month starts (e.g., salary day)'),
+          
+          React.createElement('div', { style: { marginBottom: '16px' } },
+            React.createElement('label', { style: { display: 'block', fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginBottom: '8px' } }, 'Budget starts on day:'),
+            React.createElement('select', {
+              value: budgetCycle.startDate,
+              onChange: (e) => {
+                const newCycle = { ...budgetCycle, startDate: parseInt(e.target.value) };
+                setBudgetCycle(newCycle);
+                saveToStorage('mahana_budget_cycle', newCycle);
+              },
+              style: {
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #E5E7EB',
+                borderRadius: '8px',
+                fontSize: '16px',
+                outline: 'none'
+              }
+            },
+              ...Array.from({ length: 28 }, (_, i) => i + 1).map(day =>
+                React.createElement('option', { key: day, value: day }, 
+                  day === 1 ? '1st of month' : 
+                  day === 15 ? '15th of month (mid-month)' :
+                  day === 25 ? '25th of month (common salary day)' :
+                  `${day}${day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'} of month`
+                )
+              )
+            )
+          ),
+          
+          React.createElement('div', { style: { padding: '12px', backgroundColor: '#F0F9FF', borderRadius: '8px', border: '1px solid #4C51C6' } },
+            React.createElement('p', { style: { fontSize: '14px', color: '#3C3F58', margin: 0 } }, 
+              `Current budget period: ${budgetCycle.startDate}${budgetCycle.startDate === 1 ? 'st' : budgetCycle.startDate === 2 ? 'nd' : budgetCycle.startDate === 3 ? 'rd' : 'th'} to ${budgetCycle.startDate - 1}${budgetCycle.startDate - 1 === 1 ? 'st' : budgetCycle.startDate - 1 === 2 ? 'nd' : budgetCycle.startDate - 1 === 3 ? 'rd' : 'th'} of next month`
+            )
+          )
+        ),
+        
+        // App Info
         React.createElement('div', { style: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' } },
-          React.createElement('p', { style: { color: '#3C3F58', fontSize: '16px' } }, 'Settings screen coming soon!')
+          React.createElement('h3', { style: { fontSize: '18px', fontWeight: '600', color: '#3C3F58', marginBottom: '12px' } }, 'App Information'),
+          React.createElement('p', { style: { color: '#6B7280', marginBottom: '8px', fontSize: '14px' } }, 'Mahana Budget v1.0'),
+          React.createElement('p', { style: { color: '#6B7280', marginBottom: '8px', fontSize: '14px' } }, 'Personal budget management PWA'),
+          React.createElement('p', { style: { color: '#6B7280', fontSize: '14px' } }, 'Data stored locally on your device')
         )
       );
     }
-
+    
     if (currentView === 'dashboard') {
       return React.createElement('div', null,
         // Stats Cards
