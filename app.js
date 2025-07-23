@@ -185,21 +185,36 @@ const [budgetCycle, setBudgetCycle] = useState(() => {
     }
   };
 
-  const calculateTotals = () => {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+const calculateTotals = () => {
+    const today = new Date();
+    const currentDate = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
     
-    const monthlyTransactions = transactions.filter(t => {
+    // Calculate budget period based on cycle
+    let startDate, endDate;
+    
+    if (currentDate >= budgetCycle.startDate) {
+      // Current cycle
+      startDate = new Date(currentYear, currentMonth, budgetCycle.startDate);
+      endDate = new Date(currentYear, currentMonth + 1, budgetCycle.startDate - 1);
+    } else {
+      // Previous cycle
+      startDate = new Date(currentYear, currentMonth - 1, budgetCycle.startDate);
+      endDate = new Date(currentYear, currentMonth, budgetCycle.startDate - 1);
+    }
+    
+    const cycleTransactions = transactions.filter(t => {
       const transactionDate = new Date(t.date);
-      return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+      return transactionDate >= startDate && transactionDate <= endDate;
     });
 
-    const totalIncome = monthlyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = monthlyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = cycleTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = cycleTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
 
     return { totalIncome, totalExpenses, balance: totalIncome - totalExpenses };
   };
-
+  
   const { totalIncome, totalExpenses, balance } = calculateTotals();
 
   // Render content based on current view
