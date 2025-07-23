@@ -465,7 +465,11 @@ const categories = {
         )
       )
     ),
-
+      ) : React.createElement('div', { style: { padding: '20px', textAlign: 'center' } },
+        React.createElement('h2', { style: { color: '#3C3F58' } }, currentView.charAt(0).toUpperCase() + currentView.slice(1)),
+        React.createElement('p', { style: { color: '#6B7280' } }, 'This section is coming soon!')
+      )
+                          
     // Add Transaction Modal
     showAddModal && React.createElement('div', {
       style: {
