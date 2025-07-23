@@ -264,8 +264,20 @@ const categories = {
     ),
 
     // Main Content Area
-    React.createElement('main', { style: { paddingBottom: '80px' } },
-      // Stats Cards
+      React.createElement('main', { style: { paddingBottom: '80px' } },
+      // Show Settings Screen
+      currentView === 'settings' ? React.createElement('div', { style: { padding: '16px' } },
+        React.createElement('h2', { style: { fontSize: '24px', fontWeight: 'bold', color: '#3C3F58', marginBottom: '20px' } }, 'Budget Settings'),
+        React.createElement('p', { style: { color: '#6B7280', marginBottom: '20px' } }, 'Configure your budget limits and categories'),
+        React.createElement('div', { style: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' } },
+          React.createElement('p', { style: { color: '#3C3F58', fontSize: '16px' } }, 'Settings screen coming soon!')
+        )
+      ) :
+      // Show Dashboard (existing content)
+      currentView === 'dashboard' ? React.createElement('div', null,
+        // Stats Cards
+
+    // Stats Cards
       React.createElement('div', { 
         style: { 
           display: 'grid', 
