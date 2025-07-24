@@ -1,9 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Home, Plus, BarChart3, Target, Settings, Calendar, 
-  TrendingUp, TrendingDown, Wallet, PieChart, 
-  ChevronLeft, ChevronRight, Check, X, Download
-} from 'lucide-react';
+const { useState, useEffect } = React;
 
 // localStorage Helper Functions
 const STORAGE_KEYS = {
@@ -102,11 +97,9 @@ const BudgetApp = () => {
     let startDate, endDate;
     
     if (currentDay >= budgetCycle) {
-      // Current period: this month's cycle day to next month's cycle day - 1
       startDate = new Date(currentYear, currentMonth, budgetCycle);
       endDate = new Date(currentYear, currentMonth + 1, budgetCycle - 1);
     } else {
-      // Current period: last month's cycle day to this month's cycle day - 1
       startDate = new Date(currentYear, currentMonth - 1, budgetCycle);
       endDate = new Date(currentYear, currentMonth, budgetCycle - 1);
     }
@@ -192,7 +185,7 @@ const BudgetApp = () => {
               onClick={() => setShowCalendarPicker(false)}
               className="text-gray-500 hover:text-gray-700"
             >
-              <X size={24} />
+              ✕
             </button>
           </div>
           
@@ -205,13 +198,11 @@ const BudgetApp = () => {
               <button
                 key={day}
                 onClick={() => updateBudgetCycle(day)}
-                className={`
-                  h-10 w-10 rounded-full text-sm font-medium transition-all duration-200
-                  ${budgetCycle === day 
+                className={`h-10 w-10 rounded-full text-sm font-medium transition-all duration-200 ${
+                  budgetCycle === day 
                     ? 'bg-blue-600 text-white shadow-lg scale-110' 
                     : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-600'
-                  }
-                `}
+                }`}
               >
                 {day}
               </button>
@@ -238,7 +229,7 @@ const BudgetApp = () => {
             onClick={() => setShowAddModal(false)}
             className="text-gray-500 hover:text-gray-700"
           >
-            <X size={24} />
+            ✕
           </button>
         </div>
 
@@ -348,7 +339,7 @@ const BudgetApp = () => {
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-xl shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Download size={24} />
+                <span className="text-2xl">📱</span>
                 <div>
                   <h3 className="font-semibold">Install Mahana Budget</h3>
                   <p className="text-sm opacity-90">Add to home screen for quick access</p>
@@ -359,7 +350,7 @@ const BudgetApp = () => {
                   onClick={() => setShowInstallPrompt(false)}
                   className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg"
                 >
-                  <X size={20} />
+                  ✕
                 </button>
                 <button 
                   onClick={handleInstallClick}
@@ -382,8 +373,7 @@ const BudgetApp = () => {
             onClick={() => setShowCalendarPicker(true)}
             className="mt-3 flex items-center gap-2 text-sm bg-white bg-opacity-20 px-3 py-2 rounded-lg hover:bg-opacity-30 transition-colors"
           >
-            <Calendar size={16} />
-            Change Cycle
+            📅 Change Cycle
           </button>
         </div>
 
@@ -396,7 +386,7 @@ const BudgetApp = () => {
                 <p className="text-2xl font-bold text-green-600">${totals.income.toFixed(2)}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
-                <TrendingUp className="text-green-600" size={24} />
+                <span className="text-green-600 text-2xl">📈</span>
               </div>
             </div>
           </div>
@@ -408,7 +398,7 @@ const BudgetApp = () => {
                 <p className="text-2xl font-bold text-red-600">${totals.expenses.toFixed(2)}</p>
               </div>
               <div className="p-3 bg-red-100 rounded-xl">
-                <TrendingDown className="text-red-600" size={24} />
+                <span className="text-red-600 text-2xl">📉</span>
               </div>
             </div>
           </div>
@@ -422,7 +412,7 @@ const BudgetApp = () => {
                 </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
-                <Wallet className="text-blue-600" size={24} />
+                <span className="text-blue-600 text-2xl">💰</span>
               </div>
             </div>
           </div>
@@ -439,10 +429,9 @@ const BudgetApp = () => {
                     <div className={`p-2 rounded-lg ${
                       transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
                     }`}>
-                      {transaction.type === 'income' ? 
-                        <TrendingUp className={`${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`} size={16} /> :
-                        <TrendingDown className={`${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`} size={16} />
-                      }
+                      <span className={`${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                        {transaction.type === 'income' ? '📈' : '📉'}
+                      </span>
                     </div>
                     <div>
                       <p className="font-medium">{transaction.category}</p>
@@ -470,8 +459,6 @@ const BudgetApp = () => {
 
   // Transactions View
   const TransactionsView = () => {
-    const totals = calculateTotals();
-
     return (
       <div className="p-4 space-y-6">
         <div className="flex items-center justify-between">
@@ -480,8 +467,7 @@ const BudgetApp = () => {
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors"
           >
-            <Plus size={20} />
-            Add
+            ➕ Add
           </button>
         </div>
 
@@ -494,10 +480,9 @@ const BudgetApp = () => {
                     <div className={`p-2 rounded-lg ${
                       transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
                     }`}>
-                      {transaction.type === 'income' ? 
-                        <TrendingUp className="text-green-600" size={16} /> :
-                        <TrendingDown className="text-red-600" size={16} />
-                      }
+                      <span className={`${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                        {transaction.type === 'income' ? '📈' : '📉'}
+                      </span>
                     </div>
                     <div>
                       <p className="font-medium">{transaction.category}</p>
@@ -516,8 +501,8 @@ const BudgetApp = () => {
           </div>
         ) : (
           <div className="text-center py-16">
-            <Wallet className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-500 mb-4">No transactions yet</p>
+            <span className="text-6xl">💰</span>
+            <p className="text-gray-500 mb-4 mt-4">No transactions yet</p>
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
@@ -591,8 +576,8 @@ const BudgetApp = () => {
     <div className="p-4 space-y-6">
       <h2 className="text-2xl font-bold">Goals</h2>
       <div className="text-center py-16">
-        <Target className="mx-auto text-gray-400 mb-4" size={48} />
-        <p className="text-gray-500 mb-2">Goals feature coming soon!</p>
+        <span className="text-6xl">🎯</span>
+        <p className="text-gray-500 mb-2 mt-4">Goals feature coming soon!</p>
         <p className="text-sm text-gray-400">Set and track your financial goals</p>
       </div>
     </div>
@@ -613,7 +598,7 @@ const BudgetApp = () => {
             onClick={() => setShowCalendarPicker(true)}
             className="text-blue-600 hover:text-blue-700"
           >
-            <Calendar size={20} />
+            📅
           </button>
         </div>
         
@@ -628,18 +613,17 @@ const BudgetApp = () => {
   // Navigation
   const Navigation = () => {
     const navItems = [
-      { id: 'dashboard', icon: Home, label: 'Home' },
-      { id: 'transactions', icon: Plus, label: 'Transactions' },
-      { id: 'reports', icon: BarChart3, label: 'Reports' },
-      { id: 'goals', icon: Target, label: 'Goals' },
-      { id: 'settings', icon: Settings, label: 'Settings' }
+      { id: 'dashboard', icon: '🏠', label: 'Home' },
+      { id: 'transactions', icon: '➕', label: 'Transactions' },
+      { id: 'reports', icon: '📊', label: 'Reports' },
+      { id: 'goals', icon: '🎯', label: 'Goals' },
+      { id: 'settings', icon: '⚙️', label: 'Settings' }
     ];
 
     return (
       <nav className="bg-white border-t border-gray-200 px-4 py-2">
         <div className="flex justify-around">
           {navItems.map(item => {
-            const Icon = item.icon;
             const isActive = currentView === item.id;
             
             return (
@@ -650,7 +634,7 @@ const BudgetApp = () => {
                   isActive ? 'text-blue-600' : 'text-gray-500'
                 }`}
               >
-                <Icon size={20} className={isActive ? 'text-blue-600' : 'text-gray-500'} />
+                <span className="text-xl">{item.icon}</span>
                 <span className="text-xs mt-1 truncate">{item.label}</span>
               </button>
             );
@@ -696,4 +680,5 @@ const BudgetApp = () => {
   );
 };
 
-export default BudgetApp;
+// Render the app
+ReactDOM.render(<BudgetApp />, document.getElementById('root'));
