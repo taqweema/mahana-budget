@@ -1,62 +1,15 @@
-const { useState, useEffect } = React;
-
-// Simple SVG Icons
-const PlusCircle = () => React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('circle', { cx: 12, cy: 12, r: 10 }),
-  React.createElement('path', { d: 'M12 8v8M8 12h8' })
-);
-
-const TrendingUp = () => React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('polyline', { points: '22,7 13.5,15.5 8.5,10.5 2,17' }),
-  React.createElement('polyline', { points: '16,7 22,7 22,13' })
-);
-
-const TrendingDown = () => React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('polyline', { points: '22,17 13.5,8.5 8.5,13.5 2,7' }),
-  React.createElement('polyline', { points: '16,17 22,17 22,11' })
-);
-
-const Wallet = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('path', { d: 'M19 7h-3V6a4 4 0 0 0-8 0v1H5a1 1 0 0 0-1 1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8a1 1 0 0 0-1-1zM10 6a2 2 0 0 1 4 0v1h-4V6zm8 13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9h2v1a1 1 0 0 0 2 0V9h4v1a1 1 0 0 0 2 0V9h2v10z' })
-);
-
-const Smartphone = () => React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('rect', { x: 5, y: 2, width: 14, height: 20, rx: 2, ry: 2 }),
-  React.createElement('line', { x1: 12, y1: 18, x2: 12.01, y2: 18 })
-);
-
-const Home = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('path', { d: 'M3 9.5L12 1l9 8.5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-11z' }),
-  React.createElement('polyline', { points: '9,22 9,12 15,12 15,22' })
-);
-
-const Receipt = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('path', { d: 'M14,2H6A2,2 0 0,0 4,4V20L7,18L10,20L13,18L16,20V4A2,2 0 0,0 14,2M16,16H8V14H16M16,12H8V10H16M12,8H8V6H12V8Z' })
-);
-
-const BarChart3 = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('path', { d: 'M3 3v18h18M7 16V9M12 16V6M17 16v-2' })
-);
-
-const Target = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('circle', { cx: 12, cy: 12, r: 10 }),
-  React.createElement('circle', { cx: 12, cy: 12, r: 6 }),
-  React.createElement('circle', { cx: 12, cy: 12, r: 2 })
-);
-
-const X = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('path', { d: 'M18 6L6 18M6 6l12 12' })
-);
-
-const Settings = () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, 
-  React.createElement('circle', { cx: 12, cy: 12, r: 3 }),
-  React.createElement('path', { d: 'M12 1v6m0 10v6m11-7h-6m-10 0H1m15.5-3.5L19 10l-1.5-1.5M5 14l-1.5 1.5L2 14l1.5-1.5L5 14z' })
-);
+import React, { useState, useEffect } from 'react';
+import { 
+  Home, Plus, BarChart3, Target, Settings, Calendar, 
+  TrendingUp, TrendingDown, Wallet, PieChart, 
+  ChevronLeft, ChevronRight, Check, X, Download
+} from 'lucide-react';
 
 // localStorage Helper Functions
 const STORAGE_KEYS = {
   TRANSACTIONS: 'mahana_budget_transactions',
-  SETTINGS: 'mahana_budget_settings'
+  BUDGET_LIMITS: 'mahana_budget_limits',
+  BUDGET_CYCLE: 'mahana_budget_cycle'
 };
 
 const saveToStorage = (key, data) => {
@@ -79,715 +32,668 @@ const loadFromStorage = (key, defaultValue = null) => {
   }
 };
 
+// Default categories
+const DEFAULT_CATEGORIES = {
+  income: ['Salary', 'Freelance', 'Investment', 'Other'],
+  expense: ['Food', 'Transport', 'Entertainment', 'Bills', 'Shopping', 'Health', 'Other']
+};
+
 const BudgetApp = () => {
+  // State management
   const [currentView, setCurrentView] = useState('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showCalendarPicker, setShowCalendarPicker] = useState(false);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isInstallable, setIsInstallable] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
   
-  const [transactions, setTransactions] = useState(() => {
-    const savedTransactions = loadFromStorage(STORAGE_KEYS.TRANSACTIONS);
-    return savedTransactions || [
-      { id: 1, type: 'expense', amount: 4500, category: 'Food', description: 'Weekly grocery shopping', date: '2025-07-20' },
-      { id: 2, type: 'income', amount: 85000, category: 'Salary', description: 'Monthly salary', date: '2025-07-15' },
-      { id: 3, type: 'expense', amount: 45000, category: 'Housing', description: 'Monthly rent payment', date: '2025-07-01' },
-      { id: 4, type: 'expense', amount: 1200, category: 'Entertainment & Leisure', description: 'Netflix and Spotify', date: '2025-07-18' },
-      { id: 5, type: 'expense', amount: 2500, category: 'Transportation', description: 'Fuel for car', date: '2025-07-19' }
-    ];
-  });
-
-  const [budgetLimits] = useState(() => {
-    const savedLimits = loadFromStorage(STORAGE_KEYS.SETTINGS);
-    return savedLimits || {
-      'Housing': 45000, 'Food': 25000, 'Transportation': 15000, 
-      'Entertainment & Leisure': 8000, 'Personal Care': 5000, 
-      'Health & Insurance': 12000, 'Technology & Gadgets': 6000
-    };
-  });
+  // Data states
+  const [transactions, setTransactions] = useState([]);
+  const [budgetLimits, setBudgetLimits] = useState({});
+  const [budgetCycle, setBudgetCycle] = useState(1); // Default to 1st of month
   
-const [budgetCycle, setBudgetCycle] = useState(() => {
-    const savedCycle = loadFromStorage('mahana_budget_cycle');
-    return savedCycle || {
-      startDate: 1, // 1st of month by default
-      resetDay: 1
-    };
-  });
-  
+  // Form states
   const [newTransaction, setNewTransaction] = useState({
-    type: 'expense', amount: '', category: '', description: ''
+    type: 'expense',
+    amount: '',
+    category: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0]
   });
 
-  const categories = {
-    expense: Object.keys(budgetLimits).concat(['Gifts & Donations', 'Miscellaneous']),
-    income: ['Salary', 'Bonus/Commission', 'Freelance/Side Income', 'Investments/Dividends', 'Other Income']
-  };
-
-  // Auto-save transactions
+  // Load data on component mount
   useEffect(() => {
-    if (transactions.length > 0) {
-      saveToStorage(STORAGE_KEYS.TRANSACTIONS, transactions);
-    }
-  }, [transactions]);
+    const savedTransactions = loadFromStorage(STORAGE_KEYS.TRANSACTIONS, []);
+    const savedLimits = loadFromStorage(STORAGE_KEYS.BUDGET_LIMITS, {});
+    const savedCycle = loadFromStorage(STORAGE_KEYS.BUDGET_CYCLE, 1);
+    
+    setTransactions(savedTransactions);
+    setBudgetLimits(savedLimits);
+    setBudgetCycle(savedCycle);
+  }, []);
 
   // PWA Installation Logic
   useEffect(() => {
-    const checkInstalled = () => {
-      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
-        setIsInstalled(true);
-      }
-    };
-
-    checkInstalled();
-
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setIsInstallable(true);
-    };
-
-    const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setIsInstallable(false);
-      setDeferredPrompt(null);
+      setShowInstallPrompt(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
-    setIsInstallable(false);
-  };
-
-  const addTransaction = () => {
-    if (newTransaction.amount && newTransaction.description) {
-      const transaction = {
-        id: Date.now(),
-        ...newTransaction,
-        amount: parseFloat(newTransaction.amount),
-        date: new Date().toISOString().split('T')[0]
-      };
-      const updatedTransactions = [transaction, ...transactions];
-      setTransactions(updatedTransactions);
-      saveToStorage(STORAGE_KEYS.TRANSACTIONS, updatedTransactions);
-      setNewTransaction({ type: 'expense', amount: '', category: '', description: '' });
-      setShowAddModal(false);
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
     }
   };
 
-const calculateTotals = () => {
-    const today = new Date();
-    const currentDate = today.getDate();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
+  // Calculate current budget period
+  const getCurrentPeriod = () => {
+    const now = new Date();
+    const currentDay = now.getDate();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
     
-    // Calculate budget period based on cycle
     let startDate, endDate;
     
-    if (currentDate >= budgetCycle.startDate) {
-      // Current cycle
-      startDate = new Date(currentYear, currentMonth, budgetCycle.startDate);
-      endDate = new Date(currentYear, currentMonth + 1, budgetCycle.startDate - 1);
+    if (currentDay >= budgetCycle) {
+      // Current period: this month's cycle day to next month's cycle day - 1
+      startDate = new Date(currentYear, currentMonth, budgetCycle);
+      endDate = new Date(currentYear, currentMonth + 1, budgetCycle - 1);
     } else {
-      // Previous cycle
-      startDate = new Date(currentYear, currentMonth - 1, budgetCycle.startDate);
-      endDate = new Date(currentYear, currentMonth, budgetCycle.startDate - 1);
+      // Current period: last month's cycle day to this month's cycle day - 1
+      startDate = new Date(currentYear, currentMonth - 1, budgetCycle);
+      endDate = new Date(currentYear, currentMonth, budgetCycle - 1);
     }
     
-    const cycleTransactions = transactions.filter(t => {
+    return { startDate, endDate };
+  };
+
+  // Calculate totals for current period
+  const calculateTotals = () => {
+    const { startDate, endDate } = getCurrentPeriod();
+    
+    const currentPeriodTransactions = transactions.filter(t => {
       const transactionDate = new Date(t.date);
       return transactionDate >= startDate && transactionDate <= endDate;
     });
-
-    const totalIncome = cycleTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = cycleTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-
-    return { totalIncome, totalExpenses, balance: totalIncome - totalExpenses };
-  };
-  
-  const { totalIncome, totalExpenses, balance } = calculateTotals();
-
-  // Render content based on current view
-  const renderContent = () => {
-if (currentView === 'settings') {
-      return React.createElement('div', { style: { padding: '16px' } },
-        React.createElement('h2', { style: { fontSize: '24px', fontWeight: 'bold', color: '#3C3F58', marginBottom: '20px' } }, 'Budget Settings'),
-        
-        // Budget Cycle Settings
-        React.createElement('div', { style: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' } },
-          React.createElement('h3', { style: { fontSize: '18px', fontWeight: '600', color: '#3C3F58', marginBottom: '12px' } }, 'Budget Cycle'),
-          React.createElement('p', { style: { color: '#6B7280', marginBottom: '16px', fontSize: '14px' } }, 'Set when your budget month starts (e.g., salary day)'),
-          
-          React.createElement('div', { style: { marginBottom: '16px' } },
-            React.createElement('label', { style: { display: 'block', fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginBottom: '8px' } }, 'Budget starts on day:'),
-            React.createElement('select', {
-              value: budgetCycle.startDate,
-              onChange: (e) => {
-                const newCycle = { ...budgetCycle, startDate: parseInt(e.target.value) };
-                setBudgetCycle(newCycle);
-                saveToStorage('mahana_budget_cycle', newCycle);
-              },
-              style: {
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px',
-                fontSize: '16px',
-                outline: 'none'
-              }
-            },
-              ...Array.from({ length: 28 }, (_, i) => i + 1).map(day =>
-                React.createElement('option', { key: day, value: day }, 
-                  day === 1 ? '1st of month' : 
-                  day === 15 ? '15th of month (mid-month)' :
-                  day === 25 ? '25th of month (common salary day)' :
-                  `${day}${day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'} of month`
-                )
-              )
-            )
-          ),
-          
-          React.createElement('div', { style: { padding: '12px', backgroundColor: '#F0F9FF', borderRadius: '8px', border: '1px solid #4C51C6' } },
-            React.createElement('p', { style: { fontSize: '14px', color: '#3C3F58', margin: 0 } }, 
-              `Current budget period: ${budgetCycle.startDate}${budgetCycle.startDate === 1 ? 'st' : budgetCycle.startDate === 2 ? 'nd' : budgetCycle.startDate === 3 ? 'rd' : 'th'} to ${budgetCycle.startDate - 1}${budgetCycle.startDate - 1 === 1 ? 'st' : budgetCycle.startDate - 1 === 2 ? 'nd' : budgetCycle.startDate - 1 === 3 ? 'rd' : 'th'} of next month`
-            )
-          )
-        ),
-        
-        // App Info
-        React.createElement('div', { style: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' } },
-          React.createElement('h3', { style: { fontSize: '18px', fontWeight: '600', color: '#3C3F58', marginBottom: '12px' } }, 'App Information'),
-          React.createElement('p', { style: { color: '#6B7280', marginBottom: '8px', fontSize: '14px' } }, 'Mahana Budget v1.0'),
-          React.createElement('p', { style: { color: '#6B7280', marginBottom: '8px', fontSize: '14px' } }, 'Personal budget management PWA'),
-          React.createElement('p', { style: { color: '#6B7280', fontSize: '14px' } }, 'Data stored locally on your device')
-        )
-      );
-    }
     
-    if (currentView === 'dashboard') {
-      return React.createElement('div', null,
-        // Stats Cards
-        React.createElement('div', { 
-          style: { 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(3, 1fr)', 
-            gap: '8px', 
-            padding: '16px' 
-          } 
-        },
-          React.createElement('div', {
-            style: {
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '12px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              border: '1px solid #A6FFC8'
-            }
-          },
-            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' } },
-              React.createElement(TrendingUp),
-              React.createElement('span', { style: { fontSize: '12px', color: '#A6FFC8', fontWeight: '500' } }, 'Income')
-            ),
-            React.createElement('p', { style: { fontSize: '18px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, `₨${(totalIncome/1000).toFixed(0)}k`)
-          ),
-          React.createElement('div', {
-            style: {
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '12px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              border: '1px solid #FD830D'
-            }
-          },
-            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' } },
-              React.createElement(TrendingDown),
-              React.createElement('span', { style: { fontSize: '12px', color: '#FD830D', fontWeight: '500' } }, 'Expenses')
-            ),
-            React.createElement('p', { style: { fontSize: '18px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, `₨${(totalExpenses/1000).toFixed(0)}k`)
-          ),
-          React.createElement('div', {
-            style: {
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '12px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              border: `1px solid ${balance >= 0 ? '#4C51C6' : '#FD830D'}`
-            }
-          },
-            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' } },
-              React.createElement(Wallet),
-              React.createElement('span', { style: { fontSize: '12px', color: balance >= 0 ? '#4C51C6' : '#FD830D', fontWeight: '500' } }, 'Balance')
-            ),
-            React.createElement('p', { style: { fontSize: '18px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, `₨${(Math.abs(balance)/1000).toFixed(0)}k`)
-          )
-        ),
+    const income = currentPeriodTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    
+    const expenses = currentPeriodTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    
+    const categoryTotals = {};
+    currentPeriodTransactions
+      .filter(t => t.type === 'expense')
+      .forEach(t => {
+        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + parseFloat(t.amount);
+      });
+    
+    return {
+      income,
+      expenses,
+      balance: income - expenses,
+      categoryTotals,
+      currentPeriodTransactions
+    };
+  };
 
-        // Quick Add Section
-        React.createElement('div', { style: { padding: '0 16px' } },
-          React.createElement('div', {
-            style: {
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '16px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              marginBottom: '16px'
-            }
-          },
-            React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' } },
-              React.createElement('h3', { style: { fontWeight: '600', color: '#3C3F58', margin: 0 } }, 'Quick Add'),
-              React.createElement('button', {
-                onClick: () => setShowAddModal(true),
-                style: {
-                  backgroundColor: '#4C51C6',
-                  color: 'white',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer'
-                }
-              }, React.createElement(PlusCircle))
-            ),
-            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' } },
-              React.createElement('button', {
-                onClick: () => { setNewTransaction({...newTransaction, type: 'expense'}); setShowAddModal(true); },
-                style: {
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '12px',
-                  backgroundColor: '#FDF2F8',
-                  borderRadius: '8px',
-                  border: '1px solid #FD830D',
-                  cursor: 'pointer'
-                }
-              },
-                React.createElement(TrendingDown),
-                React.createElement('span', { style: { fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginLeft: '8px' } }, 'Expense')
-              ),
-              React.createElement('button', {
-                onClick: () => { setNewTransaction({...newTransaction, type: 'income'}); setShowAddModal(true); },
-                style: {
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '12px',
-                  backgroundColor: '#F0FDF4',
-                  borderRadius: '8px',
-                  border: '1px solid #A6FFC8',
-                  cursor: 'pointer'
-                }
-              },
-                React.createElement(TrendingUp),
-                React.createElement('span', { style: { fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginLeft: '8px' } }, 'Income')
-              )
-            )
-          )
-        ),
+  // Add new transaction
+  const addTransaction = () => {
+    if (!newTransaction.amount || !newTransaction.category) return;
+    
+    const transaction = {
+      id: Date.now().toString(),
+      ...newTransaction,
+      amount: parseFloat(newTransaction.amount),
+      timestamp: new Date().toISOString()
+    };
+    
+    const updatedTransactions = [...transactions, transaction];
+    setTransactions(updatedTransactions);
+    saveToStorage(STORAGE_KEYS.TRANSACTIONS, updatedTransactions);
+    
+    setNewTransaction({
+      type: 'expense',
+      amount: '',
+      category: '',
+      description: '',
+      date: new Date().toISOString().split('T')[0]
+    });
+    setShowAddModal(false);
+  };
 
-        // Recent Transactions
-        React.createElement('div', { style: { padding: '0 16px' } },
-          React.createElement('div', {
-            style: {
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }
-          },
-            React.createElement('div', { 
-              style: { 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between', 
-                padding: '16px', 
-                borderBottom: '1px solid #f3f4f6' 
-              } 
-            },
-              React.createElement('h3', { style: { fontWeight: '600', color: '#3C3F58', margin: 0 } }, 'Recent'),
-              React.createElement('button', {
-                onClick: () => setCurrentView('transactions'),
-                style: {
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#4C51C6',
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer'
-                }
-              }, 'View All')
-            ),
-            ...transactions.slice(0, 5).map(transaction => 
-              React.createElement('div', { 
-                key: transaction.id,
-                style: { 
-                  padding: '16px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  borderBottom: '1px solid #f9fafb'
-                } 
-              },
-                React.createElement('div', { style: { display: 'flex', alignItems: 'center' } },
-                  React.createElement('div', {
-                    style: {
-                      padding: '8px',
-                      borderRadius: '8px',
-                      backgroundColor: transaction.type === 'income' ? '#F0FDF4' : '#FDF2F8',
-                      marginRight: '12px'
-                    }
-                  }, transaction.type === 'income' ? React.createElement(TrendingUp) : React.createElement(TrendingDown)),
-                  React.createElement('div', {},
-                    React.createElement('p', { style: { fontWeight: '500', color: '#3C3F58', fontSize: '14px', margin: 0 } }, transaction.description),
-                    React.createElement('p', { style: { fontSize: '12px', color: '#6b7280', margin: 0 } }, transaction.category)
-                  )
-                ),
-                React.createElement('div', { style: { textAlign: 'right' } },
-                  React.createElement('p', { 
-                    style: { 
-                      fontWeight: '600', 
-                      fontSize: '14px', 
-                      color: transaction.type === 'income' ? '#A6FFC8' : '#FD830D',
-                      margin: 0
-                    } 
-                  }, `${transaction.type === 'income' ? '+' : '-'}₨${(transaction.amount/1000).toFixed(1)}k`),
-                  React.createElement('p', { style: { fontSize: '12px', color: '#6b7280', margin: 0 } }, new Date(transaction.date).toLocaleDateString())
-                )
-              )
-            )
-          )
-        )
-      );
-    }
+  // Update budget cycle
+  const updateBudgetCycle = (day) => {
+    setBudgetCycle(day);
+    saveToStorage(STORAGE_KEYS.BUDGET_CYCLE, day);
+    setShowCalendarPicker(false);
+  };
 
-    // Default for other views
-    return React.createElement('div', { style: { padding: '20px', textAlign: 'center' } },
-      React.createElement('h2', { style: { color: '#3C3F58' } }, currentView.charAt(0).toUpperCase() + currentView.slice(1)),
-      React.createElement('p', { style: { color: '#6B7280' } }, 'This section is coming soon!')
+  // Calendar Picker Component
+  const CalendarPicker = () => {
+    const days = Array.from({ length: 31 }, (_, i) => i + 1);
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">Budget Cycle Start</h3>
+            <button 
+              onClick={() => setShowCalendarPicker(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X size={24} />
+            </button>
+          </div>
+          
+          <p className="text-sm text-gray-600 mb-4">
+            Choose which day of the month your budget period starts
+          </p>
+          
+          <div className="grid grid-cols-7 gap-2">
+            {days.map(day => (
+              <button
+                key={day}
+                onClick={() => updateBudgetCycle(day)}
+                className={`
+                  h-10 w-10 rounded-full text-sm font-medium transition-all duration-200
+                  ${budgetCycle === day 
+                    ? 'bg-blue-600 text-white shadow-lg scale-110' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-600'
+                  }
+                `}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+          
+          <div className="mt-6 p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-700">
+              Current: {budgetCycle}th of each month
+            </p>
+          </div>
+        </div>
+      </div>
     );
   };
 
-  return React.createElement('div', { style: { minHeight: '100vh', backgroundColor: '#E9F4FF' } },
-    // Header
-    React.createElement('header', { 
-      style: { 
-        backgroundColor: 'white', 
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)', 
-        borderBottom: '1px solid #e5e7eb',
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-        padding: '12px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      } 
-    },
-      React.createElement('div', { style: { display: 'flex', alignItems: 'center' } },
-        React.createElement('div', { 
-          style: { 
-            backgroundColor: '#4C51C6', 
-            padding: '8px', 
-            borderRadius: '8px', 
-            marginRight: '12px' 
-          } 
-        }, React.createElement(Wallet)),
-        React.createElement('h1', { 
-          style: { 
-            fontSize: '18px', 
-            fontWeight: 'bold', 
-            color: '#3C3F58',
-            margin: 0
-          } 
-        }, 'Mahana Budget')
-      ),
+  // Add Transaction Modal
+  const AddTransactionModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-semibold text-gray-800">Add Transaction</h3>
+          <button 
+            onClick={() => setShowAddModal(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {/* Transaction Type */}
+          <div className="flex bg-gray-100 rounded-xl p-1">
+            <button
+              onClick={() => setNewTransaction({...newTransaction, type: 'expense', category: ''})}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                newTransaction.type === 'expense' 
+                  ? 'bg-white text-red-600 shadow-sm' 
+                  : 'text-gray-600'
+              }`}
+            >
+              Expense
+            </button>
+            <button
+              onClick={() => setNewTransaction({...newTransaction, type: 'income', category: ''})}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                newTransaction.type === 'income' 
+                  ? 'bg-white text-green-600 shadow-sm' 
+                  : 'text-gray-600'
+              }`}
+            >
+              Income
+            </button>
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+            <input
+              type="number"
+              value={newTransaction.amount}
+              onChange={(e) => setNewTransaction({...newTransaction, amount: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="0.00"
+            />
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <select
+              value={newTransaction.category}
+              onChange={(e) => setNewTransaction({...newTransaction, category: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select category</option>
+              {DEFAULT_CATEGORIES[newTransaction.type].map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <input
+              type="text"
+              value={newTransaction.description}
+              onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Optional description"
+            />
+          </div>
+
+          {/* Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+            <input
+              type="date"
+              value={newTransaction.date}
+              onChange={(e) => setNewTransaction({...newTransaction, date: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={() => setShowAddModal(false)}
+            className="flex-1 py-3 px-4 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={addTransaction}
+            className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+          >
+            Add Transaction
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Dashboard View
+  const DashboardView = () => {
+    const totals = calculateTotals();
+    const { startDate, endDate } = getCurrentPeriod();
+
+    return (
+      <div className="p-4 space-y-6">
+        {/* Install Prompt */}
+        {showInstallPrompt && (
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-xl shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Download size={24} />
+                <div>
+                  <h3 className="font-semibold">Install Mahana Budget</h3>
+                  <p className="text-sm opacity-90">Add to home screen for quick access</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowInstallPrompt(false)}
+                  className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg"
+                >
+                  <X size={20} />
+                </button>
+                <button 
+                  onClick={handleInstallClick}
+                  className="px-4 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors"
+                >
+                  Install
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Period Info */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
+          <h2 className="text-xl font-bold mb-2">Current Budget Period</h2>
+          <p className="opacity-90">
+            {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+          </p>
+          <button
+            onClick={() => setShowCalendarPicker(true)}
+            className="mt-3 flex items-center gap-2 text-sm bg-white bg-opacity-20 px-3 py-2 rounded-lg hover:bg-opacity-30 transition-colors"
+          >
+            <Calendar size={16} />
+            Change Cycle
+          </button>
+        </div>
+
+        {/* Financial Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Income</p>
+                <p className="text-2xl font-bold text-green-600">${totals.income.toFixed(2)}</p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-xl">
+                <TrendingUp className="text-green-600" size={24} />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-red-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Expenses</p>
+                <p className="text-2xl font-bold text-red-600">${totals.expenses.toFixed(2)}</p>
+              </div>
+              <div className="p-3 bg-red-100 rounded-xl">
+                <TrendingDown className="text-red-600" size={24} />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Balance</p>
+                <p className={`text-2xl font-bold ${totals.balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  ${totals.balance.toFixed(2)}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <Wallet className="text-blue-600" size={24} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Transactions */}
+        <div className="bg-white p-6 rounded-2xl shadow-lg">
+          <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
+          {totals.currentPeriodTransactions.length > 0 ? (
+            <div className="space-y-3">
+              {totals.currentPeriodTransactions.slice(-5).reverse().map(transaction => (
+                <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${
+                      transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
+                    }`}>
+                      {transaction.type === 'income' ? 
+                        <TrendingUp className={`${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`} size={16} /> :
+                        <TrendingDown className={`${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`} size={16} />
+                      }
+                    </div>
+                    <div>
+                      <p className="font-medium">{transaction.category}</p>
+                      <p className="text-sm text-gray-600">{transaction.description || 'No description'}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-semibold ${
+                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">No transactions yet</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Transactions View
+  const TransactionsView = () => {
+    const totals = calculateTotals();
+
+    return (
+      <div className="p-4 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Transactions</h2>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={20} />
+            Add
+          </button>
+        </div>
+
+        {transactions.length > 0 ? (
+          <div className="space-y-3">
+            {transactions.slice().reverse().map(transaction => (
+              <div key={transaction.id} className="bg-white p-4 rounded-xl shadow-sm border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${
+                      transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
+                    }`}>
+                      {transaction.type === 'income' ? 
+                        <TrendingUp className="text-green-600" size={16} /> :
+                        <TrendingDown className="text-red-600" size={16} />
+                      }
+                    </div>
+                    <div>
+                      <p className="font-medium">{transaction.category}</p>
+                      <p className="text-sm text-gray-600">{transaction.description || 'No description'}</p>
+                      <p className="text-xs text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <p className={`font-bold text-lg ${
+                    transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <Wallet className="mx-auto text-gray-400 mb-4" size={48} />
+            <p className="text-gray-500 mb-4">No transactions yet</p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              Add Your First Transaction
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Reports View
+  const ReportsView = () => {
+    const totals = calculateTotals();
+
+    return (
+      <div className="p-4 space-y-6">
+        <h2 className="text-2xl font-bold">Reports</h2>
+
+        {/* Category Breakdown */}
+        <div className="bg-white p-6 rounded-2xl shadow-lg">
+          <h3 className="text-lg font-semibold mb-4">Spending by Category</h3>
+          {Object.keys(totals.categoryTotals).length > 0 ? (
+            <div className="space-y-4">
+              {Object.entries(totals.categoryTotals)
+                .sort(([,a], [,b]) => b - a)
+                .map(([category, amount]) => {
+                  const percentage = totals.expenses > 0 ? (amount / totals.expenses) * 100 : 0;
+                  return (
+                    <div key={category} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{category}</span>
+                        <span className="text-gray-600">${amount.toFixed(2)} ({percentage.toFixed(1)}%)</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-blue-600 transition-all duration-300"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">No expense data available</p>
+          )}
+        </div>
+
+        {/* Summary Stats */}
+        <div className="bg-white p-6 rounded-2xl shadow-lg">
+          <h3 className="text-lg font-semibold mb-4">Period Summary</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-4 bg-green-50 rounded-xl">
+              <p className="text-2xl font-bold text-green-600">{totals.currentPeriodTransactions.filter(t => t.type === 'income').length}</p>
+              <p className="text-sm text-gray-600">Income Transactions</p>
+            </div>
+            <div className="text-center p-4 bg-red-50 rounded-xl">
+              <p className="text-2xl font-bold text-red-600">{totals.currentPeriodTransactions.filter(t => t.type === 'expense').length}</p>
+              <p className="text-sm text-gray-600">Expense Transactions</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Goals View (Placeholder)
+  const GoalsView = () => (
+    <div className="p-4 space-y-6">
+      <h2 className="text-2xl font-bold">Goals</h2>
+      <div className="text-center py-16">
+        <Target className="mx-auto text-gray-400 mb-4" size={48} />
+        <p className="text-gray-500 mb-2">Goals feature coming soon!</p>
+        <p className="text-sm text-gray-400">Set and track your financial goals</p>
+      </div>
+    </div>
+  );
+
+  // Settings View
+  const SettingsView = () => (
+    <div className="p-4 space-y-6">
+      <h2 className="text-2xl font-bold">Settings</h2>
       
-      // PWA Install Button
-      isInstallable && !isInstalled && React.createElement('button', {
-        onClick: handleInstallClick,
-        style: {
-          display: 'flex',
-          alignItems: 'center',
-          padding: '8px 12px',
-          borderRadius: '8px',
-          backgroundColor: '#4C51C6',
-          color: 'white',
-          fontSize: '14px',
-          fontWeight: '500',
-          border: 'none',
-          cursor: 'pointer'
-        }
-      },
-        React.createElement(Smartphone),
-        React.createElement('span', { style: { marginLeft: '8px' } }, 'Install')
-      )
-    ),
-
-    // Main Content
-    React.createElement('main', { style: { paddingBottom: '80px' } },
-      renderContent()
-    ),
-
-    // Add Transaction Modal
-    showAddModal && React.createElement('div', {
-      style: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'end',
-        zIndex: 50
-      }
-    },
-      React.createElement('div', {
-        style: {
-          backgroundColor: 'white',
-          width: '100%',
-          borderTopLeftRadius: '16px',
-          borderTopRightRadius: '16px',
-          padding: '24px'
-        }
-      },
-        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' } },
-          React.createElement('h2', { style: { fontSize: '20px', fontWeight: 'bold', color: '#3C3F58', margin: 0 } }, 'Add Transaction'),
-          React.createElement('button', {
-            onClick: () => setShowAddModal(false),
-            style: {
-              padding: '8px',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: '#f3f4f6',
-              cursor: 'pointer'
-            }
-          }, React.createElement(X))
-        ),
+      <div className="bg-white rounded-2xl shadow-lg divide-y">
+        <div className="p-4 flex items-center justify-between">
+          <div>
+            <h3 className="font-medium">Budget Cycle</h3>
+            <p className="text-sm text-gray-600">Starts on the {budgetCycle}th of each month</p>
+          </div>
+          <button
+            onClick={() => setShowCalendarPicker(true)}
+            className="text-blue-600 hover:text-blue-700"
+          >
+            <Calendar size={20} />
+          </button>
+        </div>
         
-        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } },
-          // Type Selection
-          React.createElement('div', {},
-            React.createElement('label', { style: { display: 'block', fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginBottom: '8px' } }, 'Type'),
-            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' } },
-              React.createElement('button', {
-                onClick: () => setNewTransaction({...newTransaction, type: 'expense'}),
-                style: {
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  backgroundColor: newTransaction.type === 'expense' ? '#FDF2F8' : '#F8F9FA',
-                  borderColor: newTransaction.type === 'expense' ? '#FD830D' : '#E5E7EB',
-                  color: newTransaction.type === 'expense' ? '#FD830D' : '#6B7280'
-                }
-              }, 'Expense'),
-              React.createElement('button', {
-                onClick: () => setNewTransaction({...newTransaction, type: 'income'}),
-                style: {
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  backgroundColor: newTransaction.type === 'income' ? '#F0FDF4' : '#F8F9FA',
-                  borderColor: newTransaction.type === 'income' ? '#A6FFC8' : '#E5E7EB',
-                  color: newTransaction.type === 'income' ? '#A6FFC8' : '#6B7280'
-                }
-              }, 'Income')
-            )
-          ),
+        <div className="p-4">
+          <h3 className="font-medium mb-2">App Version</h3>
+          <p className="text-sm text-gray-600">Mahana Budget v2.0</p>
+        </div>
+      </div>
+    </div>
+  );
 
-          // Amount Input
-          React.createElement('div', {},
-            React.createElement('label', { style: { display: 'block', fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginBottom: '8px' } }, 'Amount (₨)'),
-            React.createElement('input', {
-              type: 'number',
-              value: newTransaction.amount,
-              onChange: (e) => setNewTransaction({...newTransaction, amount: e.target.value}),
-              placeholder: '0',
-              style: {
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px',
-                fontSize: '16px',
-                outline: 'none'
-              }
-            })
-          ),
+  // Navigation
+  const Navigation = () => {
+    const navItems = [
+      { id: 'dashboard', icon: Home, label: 'Home' },
+      { id: 'transactions', icon: Plus, label: 'Transactions' },
+      { id: 'reports', icon: BarChart3, label: 'Reports' },
+      { id: 'goals', icon: Target, label: 'Goals' },
+      { id: 'settings', icon: Settings, label: 'Settings' }
+    ];
 
-          // Category Select
-          React.createElement('div', {},
-            React.createElement('label', { style: { display: 'block', fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginBottom: '8px' } }, 'Category'),
-            React.createElement('select', {
-              value: newTransaction.category,
-              onChange: (e) => setNewTransaction({...newTransaction, category: e.target.value}),
-              style: {
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px',
-                fontSize: '16px',
-                outline: 'none'
-              }
-            },
-              React.createElement('option', { value: '' }, 'Select category'),
-              ...categories[newTransaction.type].map(cat => 
-                React.createElement('option', { key: cat, value: cat }, cat)
-              )
-            )
-          ),
+    return (
+      <nav className="bg-white border-t border-gray-200 px-4 py-2">
+        <div className="flex justify-around">
+          {navItems.map(item => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => setCurrentView(item.id)}
+                className={`flex flex-col items-center p-2 min-w-0 ${
+                  isActive ? 'text-blue-600' : 'text-gray-500'
+                }`}
+              >
+                <Icon size={20} className={isActive ? 'text-blue-600' : 'text-gray-500'} />
+                <span className="text-xs mt-1 truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    );
+  };
 
-          // Description Input
-          React.createElement('div', {},
-            React.createElement('label', { style: { display: 'block', fontSize: '14px', fontWeight: '500', color: '#3C3F58', marginBottom: '8px' } }, 'Description'),
-            React.createElement('input', {
-              type: 'text',
-              value: newTransaction.description,
-              onChange: (e) => setNewTransaction({...newTransaction, description: e.target.value}),
-              placeholder: 'What was this for?',
-              style: {
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px',
-                fontSize: '16px',
-                outline: 'none'
-}
-            })
-          ),
+  // Render current view
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'dashboard': return <DashboardView />;
+      case 'transactions': return <TransactionsView />;
+      case 'reports': return <ReportsView />;
+      case 'goals': return <GoalsView />;
+      case 'settings': return <SettingsView />;
+      default: return <DashboardView />;
+    }
+  };
 
-          // Add Button
-          React.createElement('button', {
-            onClick: addTransaction,
-            style: {
-              width: '100%',
-              backgroundColor: '#4C51C6',
-              color: 'white',
-              padding: '12px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              border: 'none',
-              cursor: 'pointer',
-              marginTop: '8px'
-            }
-          }, 'Add Transaction')
-        )
-      )
-    ),
+  return (
+    <div className="min-h-screen bg-blue-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm p-4">
+        <h1 className="text-2xl font-bold text-gray-800">Mahana Budget</h1>
+      </header>
 
-    // Bottom Navigation
-    React.createElement('nav', {
-      style: {
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'white',
-        borderTop: '1px solid #e5e7eb',
-        padding: '8px 16px'
-      }
-    },
-      React.createElement('div', { style: { display: 'flex', justifyContent: 'space-around' } },
-        React.createElement('button', {
-          onClick: () => setCurrentView('dashboard'),
-          style: {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: currentView === 'dashboard' ? '#E9F4FF' : 'transparent',
-            color: currentView === 'dashboard' ? '#4C51C6' : '#6B7280',
-            cursor: 'pointer'
-          }
-        },
-          React.createElement(Home),
-          React.createElement('span', { style: { fontSize: '12px', fontWeight: '500', marginTop: '4px' } }, 'Home')
-        ),
-        React.createElement('button', {
-          onClick: () => setCurrentView('transactions'),
-          style: {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: currentView === 'transactions' ? '#E9F4FF' : 'transparent',
-            color: currentView === 'transactions' ? '#4C51C6' : '#6B7280',
-            cursor: 'pointer'
-          }
-        },
-          React.createElement(Receipt),
-          React.createElement('span', { style: { fontSize: '12px', fontWeight: '500', marginTop: '4px' } }, 'Transactions')
-        ),
-        React.createElement('button', {
-          onClick: () => setCurrentView('reports'),
-          style: {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: currentView === 'reports' ? '#E9F4FF' : 'transparent',
-            color: currentView === 'reports' ? '#4C51C6' : '#6B7280',
-            cursor: 'pointer'
-          }
-        },
-          React.createElement(BarChart3),
-          React.createElement('span', { style: { fontSize: '12px', fontWeight: '500', marginTop: '4px' } }, 'Reports')
-        ),
-        React.createElement('button', {
-          onClick: () => setCurrentView('goals'),
-          style: {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: currentView === 'goals' ? '#E9F4FF' : 'transparent',
-            color: currentView === 'goals' ? '#4C51C6' : '#6B7280',
-            cursor: 'pointer'
-          }
-        },
-          React.createElement(Target),
-          React.createElement('span', { style: { fontSize: '12px', fontWeight: '500', marginTop: '4px' } }, 'Goals')
-        ),
-        React.createElement('button', {
-          onClick: () => setCurrentView('settings'),
-          style: {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: currentView === 'settings' ? '#E9F4FF' : 'transparent',
-            color: currentView === 'settings' ? '#4C51C6' : '#6B7280',
-            cursor: 'pointer'
-          }
-        },
-          React.createElement(Settings),
-          React.createElement('span', { style: { fontSize: '12px', fontWeight: '500', marginTop: '4px' } }, 'Settings')
-        )
-      )
-    )
+      {/* Main Content */}
+      <main className="pb-20">
+        {renderCurrentView()}
+      </main>
+
+      {/* Navigation */}
+      <div className="fixed bottom-0 left-0 right-0">
+        <Navigation />
+      </div>
+
+      {/* Modals */}
+      {showAddModal && <AddTransactionModal />}
+      {showCalendarPicker && <CalendarPicker />}
+    </div>
   );
 };
 
-ReactDOM.render(React.createElement(BudgetApp), document.getElementById('root'));
+export default BudgetApp;
