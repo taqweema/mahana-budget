@@ -1399,3 +1399,89 @@ const BudgetApp = () => {
             </button>
           </div>
         </div>
+        
+        <div className="p-4">
+          <h3 className="font-medium mb-2">App Version</h3>
+          <p className="text-sm text-gray-600">Mahana Budget v2.1 - Budget Limits & Keyboard Fix</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Navigation
+  const Navigation = () => {
+    const navItems = [
+      { id: 'dashboard', icon: '🏠', label: 'Home' },
+      { id: 'transactions', icon: '➕', label: 'Transactions' },
+      { id: 'reports', icon: '📊', label: 'Reports' },
+      { id: 'goals', icon: '🎯', label: 'Goals' },
+      { id: 'settings', icon: '⚙️', label: 'Settings' }
+    ];
+
+    return (
+      <nav className="bg-white border-t border-gray-200 px-4 py-2">
+        <div className="flex justify-around">
+          {navItems.map(item => {
+            const isActive = currentView === item.id;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => setCurrentView(item.id)}
+                className={`flex flex-col items-center p-2 min-w-0 ${
+                  isActive ? 'text-blue-600' : 'text-gray-500'
+                }`}
+              >
+                <span className="text-xl">{item.icon}</span>
+                <span className="text-xs mt-1 truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    );
+  };
+
+  // Render current view
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'dashboard': return <DashboardView />;
+      case 'transactions': return <TransactionsView />;
+      case 'reports': return <ReportsView />;
+      case 'goals': return <GoalsView />;
+      case 'settings': return <SettingsView />;
+      default: return <DashboardView />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-blue-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm p-4">
+        <h1 className="text-2xl font-bold text-gray-800">Mahana Budget</h1>
+      </header>
+
+      {/* Main Content */}
+      <main className="pb-20">
+        {renderCurrentView()}
+      </main>
+
+      {/* Navigation */}
+      <div className="fixed bottom-0 left-0 right-0">
+        <Navigation />
+      </div>
+
+      {/* Modals */}
+      {showAddModal && <AddTransactionModal />}
+      {showCalendarPicker && <CalendarPicker />}
+      {showCategoryModal && <AddCategoryModal />}
+      {showResetModal && <ResetModal />}
+      {showTransactionDetail && <TransactionDetailModal />}
+      {showBudgetModal && <BudgetLimitModal />}
+      {showBudgetSetup && <BudgetSetupModal />}
+    </div>
+  );
+};
+
+// Render the app
+ReactDOM.render(<BudgetApp />, document.getElementById('root'));
