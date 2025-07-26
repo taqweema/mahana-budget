@@ -64,6 +64,8 @@ const BudgetApp = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [showTransactionDetail, setShowTransactionDetail] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   
   // Data states
@@ -252,6 +254,12 @@ const BudgetApp = () => {
     saveToStorage(STORAGE_KEYS.SETTINGS, newSettings);
   };
 
+  // Handle transaction click
+  const handleTransactionClick = (transaction) => {
+    setSelectedTransaction(transaction);
+    setShowTransactionDetail(true);
+  };
+
   // Simple Pie Chart Component
   const PieChart = ({ data, total }) => {
     if (!data || Object.keys(data).length === 0) return null;
@@ -335,6 +343,84 @@ const BudgetApp = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Transaction Detail Modal
+  const TransactionDetailModal = () => {
+    if (!selectedTransaction) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-gray-800">Transaction Details</h3>
+            <button 
+              onClick={() => setShowTransactionDetail(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {/* Transaction Type Badge */}
+            <div className="flex justify-center">
+              <span className={`px-4 py-2 rounded-full text-sm font-medium ${
+                selectedTransaction.type === 'income' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {selectedTransaction.type === 'income' ? '📈 Income' : '📉 Expense'}
+              </span>
+            </div>
+
+            {/* Amount */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600">Amount</p>
+              <p className={`text-3xl font-bold ${
+                selectedTransaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {settings.currencySymbol} {formatNumber(selectedTransaction.amount.toFixed(0))}
+              </p>
+            </div>
+
+            {/* Details */}
+            <div className="space-y-3 bg-gray-50 p-4 rounded-xl">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Category</span>
+                <span className="font-medium">{selectedTransaction.category}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">Date</span>
+                <span className="font-medium">{new Date(selectedTransaction.date).toLocaleDateString()}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">Description</span>
+                <span className="font-medium text-right flex-1 ml-4">
+                  {selectedTransaction.description || 'No description'}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">Added on</span>
+                <span className="font-medium">
+                  {new Date(selectedTransaction.timestamp).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowTransactionDetail(false)}
+            className="w-full mt-6 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+          >
+            Close
+          </button>
         </div>
       </div>
     );
@@ -456,7 +542,8 @@ const BudgetApp = () => {
       </div>
     </div>
   );
-// Reset Confirmation Modal
+
+  // Reset Confirmation Modal
   const ResetModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
@@ -715,7 +802,11 @@ const BudgetApp = () => {
           {totals.currentPeriodTransactions.length > 0 ? (
             <div className="space-y-3">
               {totals.currentPeriodTransactions.slice(-5).reverse().map(transaction => (
-                <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div 
+                  key={transaction.id} 
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleTransactionClick(transaction)}
+                >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${
                       transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
@@ -730,10 +821,10 @@ const BudgetApp = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold ${
+                    <p className={`font-medium text-sm ${
                       transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {transaction.type === 'income' ? '+' : '-'}{settings.currencySymbol} {formatNumber(transaction.amount.toFixed(0))}
+                      {settings.currencySymbol} {formatNumber(transaction.amount.toFixed(0))}
                     </p>
                     <p className="text-xs text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
                   </div>
@@ -765,9 +856,13 @@ const BudgetApp = () => {
         {transactions.length > 0 ? (
           <div className="space-y-3">
             {transactions.slice().reverse().map(transaction => (
-              <div key={transaction.id} className="bg-white p-4 rounded-xl shadow-sm border">
+              <div 
+                key={transaction.id} 
+                className="bg-white p-4 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleTransactionClick(transaction)}
+              >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1">
                     <div className={`p-2 rounded-lg ${
                       transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
                     }`}>
@@ -775,17 +870,19 @@ const BudgetApp = () => {
                         {transaction.type === 'income' ? '📈' : '📉'}
                       </span>
                     </div>
-                    <div>
-                      <p className="font-medium">{transaction.category}</p>
-                      <p className="text-sm text-gray-600">{transaction.description || 'No description'}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{transaction.category}</p>
+                      <p className="text-sm text-gray-600 truncate">{transaction.description || 'No description'}</p>
                       <p className="text-xs text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <p className={`font-bold text-lg ${
-                    transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {transaction.type === 'income' ? '+' : '-'}{settings.currencySymbol} {formatNumber(transaction.amount.toFixed(0))}
-                  </p>
+                  <div className="text-right ml-3">
+                    <p className={`font-medium text-sm ${
+                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {settings.currencySymbol} {formatNumber(transaction.amount.toFixed(0))}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1024,6 +1121,7 @@ const BudgetApp = () => {
       {showCalendarPicker && <CalendarPicker />}
       {showCategoryModal && <AddCategoryModal />}
       {showResetModal && <ResetModal />}
+      {showTransactionDetail && <TransactionDetailModal />}
     </div>
   );
 };
