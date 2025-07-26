@@ -41,6 +41,18 @@ const formatNumber = (num) => {
   return new Intl.NumberFormat('en-US').format(Math.round(num));
 };
 
+// Helper function to get budget status color
+const getBudgetStatus = (spent, limit) => {
+  if (!limit || limit === 0) return { color: 'gray', status: 'No limit set' };
+  
+  const percentage = (spent / limit) * 100;
+  
+  if (percentage >= 100) return { color: 'red', status: 'Over budget', percentage };
+  if (percentage >= 90) return { color: 'red', status: 'Danger zone', percentage };
+  if (percentage >= 70) return { color: 'yellow', status: 'Warning', percentage };
+  return { color: 'green', status: 'On track', percentage };
+};
+
 // Default categories
 const DEFAULT_CATEGORIES = {
   income: ['Salary', 'Freelance', 'Investment', 'Business', 'Gift', 'Other'],
@@ -65,7 +77,10 @@ const BudgetApp = () => {
   const [showResetModal, setShowResetModal] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [showTransactionDetail, setShowTransactionDetail] = useState(false);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [showBudgetSetup, setShowBudgetSetup] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   
   // Data states
@@ -75,7 +90,8 @@ const BudgetApp = () => {
   const [customCategories, setCustomCategories] = useState(DEFAULT_CATEGORIES);
   const [settings, setSettings] = useState({
     currency: 'PKR',
-    currencySymbol: 'Rs.'
+    currencySymbol: 'Rs.',
+    hasSetupBudgets: false
   });
   
   // Form states
@@ -92,6 +108,8 @@ const BudgetApp = () => {
     name: ''
   });
 
+  const [newBudgetLimit, setNewBudgetLimit] = useState('');
+
   // Load data on component mount
   useEffect(() => {
     const savedTransactions = loadFromStorage(STORAGE_KEYS.TRANSACTIONS, []);
@@ -100,7 +118,8 @@ const BudgetApp = () => {
     const savedCategories = loadFromStorage(STORAGE_KEYS.CUSTOM_CATEGORIES, DEFAULT_CATEGORIES);
     const savedSettings = loadFromStorage(STORAGE_KEYS.SETTINGS, {
       currency: 'PKR',
-      currencySymbol: 'Rs.'
+      currencySymbol: 'Rs.',
+      hasSetupBudgets: false
     });
     
     setTransactions(savedTransactions);
@@ -108,6 +127,11 @@ const BudgetApp = () => {
     setBudgetCycle(savedCycle);
     setCustomCategories(savedCategories);
     setSettings(savedSettings);
+
+    // Show budget setup if user has transactions but no budget limits set
+    if (savedTransactions.length > 0 && Object.keys(savedLimits).length === 0 && !savedSettings.hasSetupBudgets) {
+      setTimeout(() => setShowBudgetSetup(true), 1000);
+    }
   }, []);
 
   // PWA Installation Logic
@@ -184,6 +208,31 @@ const BudgetApp = () => {
     };
   };
 
+  // Get budget alerts for dashboard
+  const getBudgetAlerts = () => {
+    const totals = calculateTotals();
+    const alerts = [];
+    
+    Object.entries(totals.categoryTotals).forEach(([category, spent]) => {
+      const limit = budgetLimits[category];
+      if (limit && limit > 0) {
+        const status = getBudgetStatus(spent, limit);
+        if (status.color === 'red' || status.color === 'yellow') {
+          alerts.push({
+            category,
+            spent,
+            limit,
+            status: status.status,
+            color: status.color,
+            percentage: status.percentage
+          });
+        }
+      }
+    });
+    
+    return alerts.sort((a, b) => b.percentage - a.percentage);
+  };
+
   // Add new transaction
   const addTransaction = () => {
     if (!newTransaction.amount || !newTransaction.category) return;
@@ -228,6 +277,31 @@ const BudgetApp = () => {
     setShowCategoryModal(false);
   };
 
+  // Set budget limit for category
+  const setBudgetLimit = () => {
+    if (!selectedCategory || !newBudgetLimit || parseFloat(newBudgetLimit) <= 0) return;
+    
+    const updatedLimits = {
+      ...budgetLimits,
+      [selectedCategory]: parseFloat(newBudgetLimit)
+    };
+    
+    setBudgetLimits(updatedLimits);
+    saveToStorage(STORAGE_KEYS.BUDGET_LIMITS, updatedLimits);
+    
+    setSelectedCategory('');
+    setNewBudgetLimit('');
+    setShowBudgetModal(false);
+  };
+
+  // Skip budget setup
+  const skipBudgetSetup = () => {
+    const updatedSettings = { ...settings, hasSetupBudgets: true };
+    setSettings(updatedSettings);
+    saveToStorage(STORAGE_KEYS.SETTINGS, updatedSettings);
+    setShowBudgetSetup(false);
+  };
+
   // Reset transactions
   const resetTransactions = () => {
     setTransactions([]);
@@ -260,7 +334,116 @@ const BudgetApp = () => {
     setShowTransactionDetail(true);
   };
 
-  // Enhanced Pie Chart Component with Labels
+  // Handle budget setup for category
+  const handleBudgetSetup = (category) => {
+    setSelectedCategory(category);
+    setNewBudgetLimit(budgetLimits[category]?.toString() || '');
+    setShowBudgetModal(true);
+  };
+
+  // Budget Setup Welcome Modal
+  const BudgetSetupModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="text-center mb-6">
+          <div className="text-6xl mb-4">💰</div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Set Budget Limits</h3>
+          <p className="text-gray-600">
+            Set monthly spending limits for your categories to stay on track with your budget goals.
+          </p>
+        </div>
+
+        <div className="bg-blue-50 p-4 rounded-xl mb-6">
+          <h4 className="font-medium text-blue-800 mb-2">Why set budget limits?</h4>
+          <ul className="text-sm text-blue-700 space-y-1">
+            <li>• Track spending against your goals</li>
+            <li>• Get alerts when approaching limits</li>
+            <li>• Better financial control</li>
+          </ul>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={skipBudgetSetup}
+            className="flex-1 py-3 px-4 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+          >
+            Skip for now
+          </button>
+          <button
+            onClick={() => {
+              setShowBudgetSetup(false);
+              setCurrentView('reports');
+            }}
+            className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+          >
+            Set Budgets
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Budget Limit Modal
+  const BudgetLimitModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-semibold text-gray-800">Set Budget Limit</h3>
+          <button 
+            onClick={() => setShowBudgetModal(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <p className="text-lg font-semibold text-gray-800">{selectedCategory}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Budget Limit</label>
+            <div className="relative">
+              <span className="absolute left-3 top-3 text-gray-500">{settings.currencySymbol}</span>
+              <input
+                type="number"
+                value={newBudgetLimit}
+                onChange={(e) => setNewBudgetLimit(e.target.value)}
+                className="w-full p-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          {budgetLimits[selectedCategory] && (
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="text-sm text-gray-600">
+                Current limit: {settings.currencySymbol} {formatNumber(budgetLimits[selectedCategory])}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={() => setShowBudgetModal(false)}
+            className="flex-1 py-3 px-4 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={setBudgetLimit}
+            className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+          >
+            Set Limit
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+// Enhanced Pie Chart Component with Labels
   const PieChart = ({ data, total }) => {
     if (!data || Object.keys(data).length === 0) return null;
     
@@ -364,6 +547,51 @@ const BudgetApp = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Budget Progress Bar Component
+  const BudgetProgressBar = ({ spent, limit, category }) => {
+    if (!limit || limit === 0) return null;
+    
+    const status = getBudgetStatus(spent, limit);
+    const percentage = Math.min((spent / limit) * 100, 100);
+    
+    const getBarColor = () => {
+      if (status.color === 'red') return 'bg-red-500';
+      if (status.color === 'yellow') return 'bg-yellow-500';
+      return 'bg-green-500';
+    };
+    
+    const getBackgroundColor = () => {
+      if (status.color === 'red') return 'bg-red-50';
+      if (status.color === 'yellow') return 'bg-yellow-50';
+      return 'bg-green-50';
+    };
+    
+    return (
+      <div className={`mt-2 p-3 rounded-lg ${getBackgroundColor()}`}>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium">Budget: {settings.currencySymbol} {formatNumber(limit)}</span>
+          <span className={`text-xs font-semibold ${
+            status.color === 'red' ? 'text-red-700' : 
+            status.color === 'yellow' ? 'text-yellow-700' : 
+            'text-green-700'
+          }`}>
+            {status.status}
+          </span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className={`h-2 rounded-full transition-all duration-300 ${getBarColor()}`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-xs mt-1 text-gray-600">
+          <span>Spent: {settings.currencySymbol} {formatNumber(spent)}</span>
+          <span>{percentage.toFixed(1)}%</span>
         </div>
       </div>
     );
@@ -500,7 +728,7 @@ const BudgetApp = () => {
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-800">Add Category</h3>
-          <button 
+          <button
             onClick={() => setShowCategoryModal(false)}
             className="text-gray-500 hover:text-gray-700"
           >
@@ -563,7 +791,8 @@ const BudgetApp = () => {
       </div>
     </div>
   );
-// Reset Confirmation Modal
+
+  // Reset Confirmation Modal
   const ResetModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
@@ -712,10 +941,11 @@ const BudgetApp = () => {
     </div>
   );
 
-  // Dashboard View
+  // Dashboard View with Budget Alerts
   const DashboardView = () => {
     const totals = calculateTotals();
     const { startDate, endDate } = getCurrentPeriod();
+    const budgetAlerts = getBudgetAlerts();
 
     return (
       <div className="p-4 space-y-6">
@@ -745,6 +975,35 @@ const BudgetApp = () => {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Budget Alerts */}
+        {budgetAlerts.length > 0 && (
+          <div className="space-y-3">
+            {budgetAlerts.map((alert, index) => (
+              <div key={index} className={`p-4 rounded-xl shadow-lg ${
+                alert.color === 'red' ? 'bg-red-50 border-l-4 border-red-500' : 'bg-yellow-50 border-l-4 border-yellow-500'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className={`font-semibold ${
+                      alert.color === 'red' ? 'text-red-800' : 'text-yellow-800'
+                    }`}>
+                      {alert.status}: {alert.category}
+                    </h4>
+                    <p className={`text-sm ${
+                      alert.color === 'red' ? 'text-red-600' : 'text-yellow-600'
+                    }`}>
+                      {settings.currencySymbol} {formatNumber(alert.spent)} of {settings.currencySymbol} {formatNumber(alert.limit)} ({alert.percentage.toFixed(1)}%)
+                    </p>
+                  </div>
+                  <span className="text-2xl">
+                    {alert.color === 'red' ? '🚨' : '⚠️'}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -905,7 +1164,7 @@ const BudgetApp = () => {
     );
   };
 
-  // Reports View
+  // Enhanced Reports View with Budget Progress
   const ReportsView = () => {
     const totals = calculateTotals();
 
@@ -921,20 +1180,41 @@ const BudgetApp = () => {
           </div>
         )}
 
-        {/* Category Breakdown */}
+        {/* Category Breakdown with Budget Progress */}
         <div className="bg-white p-6 rounded-2xl shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Category Details</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Category Budget Tracking</h3>
+            <button
+              onClick={() => setCurrentView('settings')}
+              className="text-blue-600 text-sm hover:text-blue-700"
+            >
+              Manage Budgets
+            </button>
+          </div>
+          
           {Object.keys(totals.categoryTotals).length > 0 ? (
             <div className="space-y-4">
               {Object.entries(totals.categoryTotals)
                 .sort(([,a], [,b]) => b - a)
                 .map(([category, amount]) => {
                   const percentage = totals.expenses > 0 ? (amount / totals.expenses) * 100 : 0;
+                  const limit = budgetLimits[category];
+                  
                   return (
                     <div key={category} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">{category}</span>
-                        <span className="text-gray-600">{settings.currencySymbol} {formatNumber(amount)} ({percentage.toFixed(1)}%)</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-600">{settings.currencySymbol} {formatNumber(amount)} ({percentage.toFixed(1)}%)</span>
+                          {!limit && (
+                            <button
+                              onClick={() => handleBudgetSetup(category)}
+                              className="text-blue-600 text-xs hover:text-blue-700"
+                            >
+                              Set Budget
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div 
@@ -942,6 +1222,9 @@ const BudgetApp = () => {
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
+                      
+                      {/* Budget Progress Bar */}
+                      <BudgetProgressBar spent={amount} limit={limit} category={category} />
                     </div>
                   );
                 })}
@@ -981,7 +1264,7 @@ const BudgetApp = () => {
     </div>
   );
 
-  // Settings View (Mobile Optimized)
+  // Enhanced Settings View with Budget Management
   const SettingsView = () => (
     <div className="p-4 space-y-6">
       <h2 className="text-2xl font-bold">Settings</h2>
@@ -1017,6 +1300,36 @@ const BudgetApp = () => {
           </select>
         </div>
 
+        {/* Budget Management Section */}
+        <div className="p-4">
+          <h3 className="font-medium mb-3">Budget Limits</h3>
+          {customCategories.expense.length > 0 ? (
+            <div className="space-y-3">
+              {customCategories.expense.map(category => (
+                <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{category}</p>
+                    <p className="text-sm text-gray-600">
+                      {budgetLimits[category] 
+                        ? `${settings.currencySymbol} ${formatNumber(budgetLimits[category])} per month`
+                        : 'No limit set'
+                      }
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleBudgetSetup(category)}
+                    className="text-blue-600 hover:text-blue-700 p-2"
+                  >
+                    {budgetLimits[category] ? '✏️' : '➕'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No expense categories available</p>
+          )}
+        </div>
+
         <div className="p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -1049,7 +1362,7 @@ const BudgetApp = () => {
         
         <div className="p-4">
           <h3 className="font-medium mb-2">App Version</h3>
-          <p className="text-sm text-gray-600">Mahana Budget v2.0</p>
+          <p className="text-sm text-gray-600">Mahana Budget v2.1 - Budget Limits</p>
         </div>
       </div>
     </div>
@@ -1124,6 +1437,8 @@ const BudgetApp = () => {
       {showCategoryModal && <AddCategoryModal />}
       {showResetModal && <ResetModal />}
       {showTransactionDetail && <TransactionDetailModal />}
+      {showBudgetModal && <BudgetLimitModal />}
+      {showBudgetSetup && <BudgetSetupModal />}
     </div>
   );
 };
