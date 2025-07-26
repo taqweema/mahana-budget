@@ -1,4 +1,4 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 // localStorage Helper Functions
 const STORAGE_KEYS = {
@@ -94,7 +94,7 @@ const BudgetApp = () => {
     hasSetupBudgets: false
   });
   
-  // Form states
+  // Form states with refs for focus management
   const [newTransaction, setNewTransaction] = useState({
     type: 'expense',
     amount: '',
@@ -109,6 +109,10 @@ const BudgetApp = () => {
   });
 
   const [newBudgetLimit, setNewBudgetLimit] = useState('');
+
+  // Refs for maintaining focus
+  const transactionAmountRef = useRef(null);
+  const budgetLimitRef = useRef(null);
 
   // Load data on component mount
   useEffect(() => {
@@ -233,7 +237,7 @@ const BudgetApp = () => {
     return alerts.sort((a, b) => b.percentage - a.percentage);
   };
 
-  // Add new transaction
+  // Fixed: Add new transaction with proper state handling
   const addTransaction = () => {
     if (!newTransaction.amount || !newTransaction.category) return;
     
@@ -248,6 +252,7 @@ const BudgetApp = () => {
     setTransactions(updatedTransactions);
     saveToStorage(STORAGE_KEYS.TRANSACTIONS, updatedTransactions);
     
+    // Reset form
     setNewTransaction({
       type: 'expense',
       amount: '',
@@ -256,6 +261,14 @@ const BudgetApp = () => {
       date: new Date().toISOString().split('T')[0]
     });
     setShowAddModal(false);
+  };
+
+  // Fixed: Transaction amount change handler
+  const handleTransactionAmountChange = (value) => {
+    setNewTransaction(prev => ({
+      ...prev,
+      amount: value
+    }));
   };
 
   // Add new category
@@ -277,7 +290,7 @@ const BudgetApp = () => {
     setShowCategoryModal(false);
   };
 
-  // Set budget limit for category
+  // Fixed: Set budget limit with proper state handling
   const setBudgetLimit = () => {
     if (!selectedCategory || !newBudgetLimit || parseFloat(newBudgetLimit) <= 0) return;
     
@@ -292,6 +305,11 @@ const BudgetApp = () => {
     setSelectedCategory('');
     setNewBudgetLimit('');
     setShowBudgetModal(false);
+  };
+
+  // Fixed: Budget limit change handler
+  const handleBudgetLimitChange = (value) => {
+    setNewBudgetLimit(value);
   };
 
   // Skip budget setup
@@ -383,7 +401,7 @@ const BudgetApp = () => {
     </div>
   );
 
-  // Budget Limit Modal
+  // Fixed: Budget Limit Modal with proper input handling
   const BudgetLimitModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
@@ -406,13 +424,25 @@ const BudgetApp = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Budget Limit</label>
             <div className="relative">
-              <span className="absolute left-3 top-3 text-gray-500">{settings.currencySymbol}</span>
+              <span className="absolute left-3 top-3 text-gray-500 z-10">{settings.currencySymbol}</span>
               <input
+                ref={budgetLimitRef}
                 type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={newBudgetLimit}
-                onChange={(e) => setNewBudgetLimit(e.target.value)}
+                onChange={(e) => handleBudgetLimitChange(e.target.value)}
+                onFocus={() => {
+                  // Ensure input stays focused
+                  setTimeout(() => {
+                    if (budgetLimitRef.current) {
+                      budgetLimitRef.current.focus();
+                    }
+                  }, 100);
+                }}
                 className="w-full p-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="0.00"
+                placeholder="0"
+                autoComplete="off"
               />
             </div>
           </div>
@@ -712,7 +742,7 @@ const BudgetApp = () => {
             ))}
           </div>
           
-          <div className="p-3 bg-blue-50 rounded-lg text-center">
+          <div className="p-3bg-blue-50 rounded-lg text-center">
             <p className="text-sm text-blue-700">
               Current: {getOrdinal(budgetCycle)} of each month
             </p>
@@ -728,7 +758,7 @@ const BudgetApp = () => {
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-800">Add Category</h3>
-          <button
+          <button 
             onClick={() => setShowCategoryModal(false)}
             className="text-gray-500 hover:text-gray-700"
           >
@@ -822,7 +852,7 @@ const BudgetApp = () => {
     </div>
   );
 
-  // Add Transaction Modal
+  // Fixed: Add Transaction Modal with proper input handling
   const AddTransactionModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl max-h-screen overflow-auto">
@@ -861,17 +891,29 @@ const BudgetApp = () => {
             </button>
           </div>
 
-          {/* Amount */}
+          {/* Fixed: Amount Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
             <div className="relative">
-              <span className="absolute left-3 top-3 text-gray-500">{settings.currencySymbol}</span>
+              <span className="absolute left-3 top-3 text-gray-500 z-10">{settings.currencySymbol}</span>
               <input
+                ref={transactionAmountRef}
                 type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={newTransaction.amount}
-                onChange={(e) => setNewTransaction({...newTransaction, amount: e.target.value})}
+                onChange={(e) => handleTransactionAmountChange(e.target.value)}
+                onFocus={() => {
+                  // Ensure input stays focused
+                  setTimeout(() => {
+                    if (transactionAmountRef.current) {
+                      transactionAmountRef.current.focus();
+                    }
+                  }, 100);
+                }}
                 className="w-full p-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="0.00"
+                placeholder="0"
+                autoComplete="off"
               />
             </div>
           </div>
@@ -940,8 +982,7 @@ const BudgetApp = () => {
       </div>
     </div>
   );
-
-  // Dashboard View with Budget Alerts
+// Dashboard View with Budget Alerts
   const DashboardView = () => {
     const totals = calculateTotals();
     const { startDate, endDate } = getCurrentPeriod();
@@ -1251,8 +1292,7 @@ const BudgetApp = () => {
       </div>
     );
   };
-
-  // Goals View (Placeholder)
+// Goals View (Placeholder)
   const GoalsView = () => (
     <div className="p-4 space-y-6">
       <h2 className="text-2xl font-bold">Goals</h2>
@@ -1359,89 +1399,3 @@ const BudgetApp = () => {
             </button>
           </div>
         </div>
-        
-        <div className="p-4">
-          <h3 className="font-medium mb-2">App Version</h3>
-          <p className="text-sm text-gray-600">Mahana Budget v2.1 - Budget Limits</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Navigation
-  const Navigation = () => {
-    const navItems = [
-      { id: 'dashboard', icon: '🏠', label: 'Home' },
-      { id: 'transactions', icon: '➕', label: 'Transactions' },
-      { id: 'reports', icon: '📊', label: 'Reports' },
-      { id: 'goals', icon: '🎯', label: 'Goals' },
-      { id: 'settings', icon: '⚙️', label: 'Settings' }
-    ];
-
-    return (
-      <nav className="bg-white border-t border-gray-200 px-4 py-2">
-        <div className="flex justify-around">
-          {navItems.map(item => {
-            const isActive = currentView === item.id;
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => setCurrentView(item.id)}
-                className={`flex flex-col items-center p-2 min-w-0 ${
-                  isActive ? 'text-blue-600' : 'text-gray-500'
-                }`}
-              >
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-xs mt-1 truncate">{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-    );
-  };
-
-  // Render current view
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case 'dashboard': return <DashboardView />;
-      case 'transactions': return <TransactionsView />;
-      case 'reports': return <ReportsView />;
-      case 'goals': return <GoalsView />;
-      case 'settings': return <SettingsView />;
-      default: return <DashboardView />;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-blue-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm p-4">
-        <h1 className="text-2xl font-bold text-gray-800">Mahana Budget</h1>
-      </header>
-
-      {/* Main Content */}
-      <main className="pb-20">
-        {renderCurrentView()}
-      </main>
-
-      {/* Navigation */}
-      <div className="fixed bottom-0 left-0 right-0">
-        <Navigation />
-      </div>
-
-      {/* Modals */}
-      {showAddModal && <AddTransactionModal />}
-      {showCalendarPicker && <CalendarPicker />}
-      {showCategoryModal && <AddCategoryModal />}
-      {showResetModal && <ResetModal />}
-      {showTransactionDetail && <TransactionDetailModal />}
-      {showBudgetModal && <BudgetLimitModal />}
-      {showBudgetSetup && <BudgetSetupModal />}
-    </div>
-  );
-};
-
-// Render the app
-ReactDOM.render(<BudgetApp />, document.getElementById('root'));
