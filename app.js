@@ -38,7 +38,7 @@ const getOrdinal = (num) => {
 
 // Helper function for number formatting with commas
 const formatNumber = (num) => {
-  return num.toLocaleString();
+  return new Intl.NumberFormat('en-US').format(Math.round(num));
 };
 
 // Default categories
@@ -260,11 +260,11 @@ const BudgetApp = () => {
     setShowTransactionDetail(true);
   };
 
-  // Simple Pie Chart Component
+  // Enhanced Pie Chart Component with Labels
   const PieChart = ({ data, total }) => {
     if (!data || Object.keys(data).length === 0) return null;
     
-    const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280'];
+    const colors = ['#DC2626', '#EA580C', '#D97706', '#65A30D', '#0891B2', '#7C3AED', '#BE185D', '#374151'];
     let currentAngle = 0;
     
     const slices = Object.entries(data)
@@ -290,12 +290,12 @@ const BudgetApp = () => {
     return (
       <div className="space-y-4">
         <div className="flex justify-center">
-          <div className="relative w-40 h-40">
-            <svg width="160" height="160" className="transform -rotate-90">
+          <div className="relative w-48 h-48">
+            <svg width="192" height="192" className="transform -rotate-90">
               {slices.map((slice, index) => {
-                const radius = 70;
-                const centerX = 80;
-                const centerY = 80;
+                const radius = 85;
+                const centerX = 96;
+                const centerY = 96;
                 
                 const startAngleRad = (slice.startAngle * Math.PI) / 180;
                 const endAngleRad = (slice.endAngle * Math.PI) / 180;
@@ -314,13 +314,34 @@ const BudgetApp = () => {
                   'Z'
                 ].join(' ');
                 
+                // Calculate label position
+                const labelAngle = (slice.startAngle + slice.endAngle) / 2;
+                const labelRadius = radius * 0.7;
+                const labelX = centerX + labelRadius * Math.cos((labelAngle * Math.PI) / 180);
+                const labelY = centerY + labelRadius * Math.sin((labelAngle * Math.PI) / 180);
+                
                 return (
-                  <path
-                    key={index}
-                    d={pathData}
-                    fill={slice.color}
-                    className="hover:opacity-80 transition-opacity"
-                  />
+                  <g key={index}>
+                    <path
+                      d={pathData}
+                      fill={slice.color}
+                      className="hover:opacity-80 transition-opacity"
+                      stroke="white"
+                      strokeWidth="2"
+                    />
+                    {slice.percentage > 5 && (
+                      <text
+                        x={labelX}
+                        y={labelY}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="fill-white text-xs font-bold transform rotate-90"
+                        style={{ fontSize: '11px' }}
+                      >
+                        {slice.percentage.toFixed(0)}%
+                      </text>
+                    )}
+                  </g>
                 );
               })}
             </svg>
@@ -332,13 +353,13 @@ const BudgetApp = () => {
             <div key={index} className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <div 
-                  className="w-3 h-3 rounded-full" 
+                  className="w-4 h-4 rounded-full" 
                   style={{ backgroundColor: slice.color }}
                 />
-                <span>{slice.category}</span>
+                <span className="font-medium">{slice.category}</span>
               </div>
               <div className="text-right">
-                <div className="font-medium">{settings.currencySymbol} {formatNumber(slice.amount.toFixed(0))}</div>
+                <div className="font-semibold">{settings.currencySymbol} {formatNumber(slice.amount)}</div>
                 <div className="text-xs text-gray-500">{slice.percentage.toFixed(1)}%</div>
               </div>
             </div>
@@ -383,7 +404,7 @@ const BudgetApp = () => {
               <p className={`text-3xl font-bold ${
                 selectedTransaction.type === 'income' ? 'text-green-600' : 'text-red-600'
               }`}>
-                {settings.currencySymbol} {formatNumber(selectedTransaction.amount.toFixed(0))}
+                {settings.currencySymbol} {formatNumber(selectedTransaction.amount)}
               </p>
             </div>
 
@@ -542,8 +563,7 @@ const BudgetApp = () => {
       </div>
     </div>
   );
-
-  // Reset Confirmation Modal
+// Reset Confirmation Modal
   const ResetModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
@@ -713,7 +733,7 @@ const BudgetApp = () => {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setShowInstallPrompt(false)}
-                  className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg"
+                  -white hover:bg-opacity-20 rounded-lg"
                 >
                   ✕
                 </button>
@@ -748,7 +768,7 @@ const BudgetApp = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Income</p>
-                <p className="text-2xl font-bold text-green-600">{settings.currencySymbol} {formatNumber(totals.income.toFixed(0))}</p>
+                <p className="text-2xl font-bold text-green-600">{settings.currencySymbol} {formatNumber(totals.income)}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
                 <span className="text-green-600 text-2xl">📈</span>
@@ -760,7 +780,7 @@ const BudgetApp = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Expenses</p>
-                <p className="text-2xl font-bold text-red-600">{settings.currencySymbol} {formatNumber(totals.expenses.toFixed(0))}</p>
+                <p className="text-2xl font-bold text-red-600">{settings.currencySymbol} {formatNumber(totals.expenses)}</p>
               </div>
               <div className="p-3 bg-red-100 rounded-xl">
                 <span className="text-red-600 text-2xl">📉</span>
@@ -773,7 +793,7 @@ const BudgetApp = () => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Balance</p>
                 <p className={`text-2xl font-bold ${totals.balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                  {settings.currencySymbol} {formatNumber(totals.balance.toFixed(0))}
+                  {settings.currencySymbol} {formatNumber(totals.balance)}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
@@ -807,24 +827,15 @@ const BudgetApp = () => {
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors"
                   onClick={() => handleTransactionClick(transaction)}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
-                    }`}>
-                      <span className={`${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {transaction.type === 'income' ? '📈' : '📉'}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium">{transaction.category}</p>
-                      <p className="text-sm text-gray-600">{transaction.description || 'No description'}</p>
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{transaction.category}</p>
+                    <p className="text-sm text-gray-600 truncate">{transaction.description || 'No description'}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right ml-3">
                     <p className={`font-medium text-sm ${
                       transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {settings.currencySymbol} {formatNumber(transaction.amount.toFixed(0))}
+                      {settings.currencySymbol} {formatNumber(transaction.amount)}
                     </p>
                     <p className="text-xs text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
                   </div>
@@ -839,7 +850,7 @@ const BudgetApp = () => {
     );
   };
 
-  // Transactions View
+  // Transactions View (No Emojis, Date on Right)
   const TransactionsView = () => {
     return (
       <div className="p-4 space-y-6">
@@ -862,26 +873,17 @@ const BudgetApp = () => {
                 onClick={() => handleTransactionClick(transaction)}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={`p-2 rounded-lg ${
-                      transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
-                    }`}>
-                      <span className={`${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {transaction.type === 'income' ? '📈' : '📉'}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{transaction.category}</p>
-                      <p className="text-sm text-gray-600 truncate">{transaction.description || 'No description'}</p>
-                      <p className="text-xs text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
-                    </div>
+                  <div className="flex-1 min-w-0 pr-4">
+                    <p className="font-medium text-lg truncate">{transaction.category}</p>
+                    <p className="text-sm text-gray-600 truncate">{transaction.description || 'No description'}</p>
                   </div>
-                  <div className="text-right ml-3">
-                    <p className={`font-medium text-sm ${
+                  <div className="text-right">
+                    <p className={`font-semibold text-base ${
                       transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {settings.currencySymbol} {formatNumber(transaction.amount.toFixed(0))}
+                      {settings.currencySymbol} {formatNumber(transaction.amount)}
                     </p>
+                    <p className="text-xs text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
@@ -932,7 +934,7 @@ const BudgetApp = () => {
                     <div key={category} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">{category}</span>
-                        <span className="text-gray-600">{settings.currencySymbol} {formatNumber(amount.toFixed(0))} ({percentage.toFixed(1)}%)</span>
+                        <span className="text-gray-600">{settings.currencySymbol} {formatNumber(amount)} ({percentage.toFixed(1)}%)</span>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div 
