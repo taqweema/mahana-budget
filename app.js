@@ -330,7 +330,7 @@ const BudgetApp = () => {
                 <span>{slice.category}</span>
               </div>
               <div className="text-right">
-                <div className="font-medium">{settings.currencySymbol}{formatNumber(slice.amount.toFixed(0))}</div>
+                <div className="font-medium">{settings.currencySymbol} {formatNumber(slice.amount.toFixed(0))}</div>
                 <div className="text-xs text-gray-500">{slice.percentage.toFixed(1)}%</div>
               </div>
             </div>
@@ -661,7 +661,7 @@ const BudgetApp = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Income</p>
-                <p className="text-2xl font-bold text-green-600">{settings.currencySymbol}{formatNumber(totals.income.toFixed(0))}</p>
+                <p className="text-2xl font-bold text-green-600">{settings.currencySymbol} {formatNumber(totals.income.toFixed(0))}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-xl">
                 <span className="text-green-600 text-2xl">📈</span>
@@ -673,7 +673,7 @@ const BudgetApp = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Expenses</p>
-                <p className="text-2xl font-bold text-red-600">{settings.currencySymbol}{formatNumber(totals.expenses.toFixed(0))}</p>
+                <p className="text-2xl font-bold text-red-600">{settings.currencySymbol} {formatNumber(totals.expenses.toFixed(0))}</p>
               </div>
               <div className="p-3 bg-red-100 rounded-xl">
                 <span className="text-red-600 text-2xl">📉</span>
@@ -686,7 +686,7 @@ const BudgetApp = () => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Balance</p>
                 <p className={`text-2xl font-bold ${totals.balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                  {settings.currencySymbol}{formatNumber(totals.balance.toFixed(0))}
+                  {settings.currencySymbol} {formatNumber(totals.balance.toFixed(0))}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-xl">
@@ -733,7 +733,7 @@ const BudgetApp = () => {
                     <p className={`font-semibold ${
                       transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {transaction.type === 'income' ? '+' : '-'}{settings.currencySymbol}{formatNumber(transaction.amount.toFixed(0))}
+                      {transaction.type === 'income' ? '+' : '-'}{settings.currencySymbol} {formatNumber(transaction.amount.toFixed(0))}
                     </p>
                     <p className="text-xs text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
                   </div>
@@ -784,7 +784,7 @@ const BudgetApp = () => {
                   <p className={`font-bold text-lg ${
                     transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {transaction.type === 'income' ? '+' : '-'}{settings.currencySymbol}{formatNumber(transaction.amount.toFixed(0))}
+                    {transaction.type === 'income' ? '+' : '-'}{settings.currencySymbol} {formatNumber(transaction.amount.toFixed(0))}
                   </p>
                 </div>
               </div>
@@ -835,7 +835,7 @@ const BudgetApp = () => {
                     <div key={category} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">{category}</span>
-                        <span className="text-gray-600">{settings.currencySymbol}{formatNumber(amount.toFixed(0))} ({percentage.toFixed(1)}%)</span>
+                        <span className="text-gray-600">{settings.currencySymbol} {formatNumber(amount.toFixed(0))} ({percentage.toFixed(1)}%)</span>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div 
