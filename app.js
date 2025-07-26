@@ -733,7 +733,7 @@ const BudgetApp = () => {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setShowInstallPrompt(false)}
-                  -white hover:bg-opacity-20 rounded-lg"
+                  className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg"
                 >
                   ✕
                 </button>
